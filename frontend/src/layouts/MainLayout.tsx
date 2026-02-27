@@ -5,12 +5,18 @@ import {
   DashboardOutlined,
   UserOutlined,
   BankOutlined,
+  TeamOutlined,
+  DollarOutlined,
+  ShopOutlined,
+  AccountBookOutlined,
   LogoutOutlined,
   KeyOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SwapOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/authStore';
 import { usePermission } from '../hooks/usePermission';
 import { companiesApi } from '../api/companies.api';
@@ -22,6 +28,7 @@ export function MainLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { token: themeToken } = theme.useToken();
+  const { t, i18n } = useTranslation();
 
   const user = useAuthStore((s) => s.user);
   const currentCompany = useAuthStore((s) => s.currentCompany);
@@ -30,6 +37,10 @@ export function MainLayout() {
   const setCompanyData = useAuthStore((s) => s.setCompanyData);
   const canManageUsers = usePermission('user.manage');
   const canManageCompanies = usePermission('company.manage');
+  const canReadCustomers = usePermission('customer.read');
+  const canReadAR = usePermission('ar.read');
+  const canReadVendors = usePermission('vendor.read');
+  const canReadAP = usePermission('ap.read');
 
   const handleLogout = async () => {
     await logout();
@@ -47,31 +58,50 @@ export function MainLayout() {
     }
   };
 
+  const toggleLanguage = () => {
+    const next = i18n.language === 'zh-TW' ? 'en' : 'zh-TW';
+    i18n.changeLanguage(next);
+  };
+
   const menuItems = [
-    { key: '/dashboard', icon: <DashboardOutlined />, label: 'Dashboard' },
-    ...(canManageUsers
-      ? [{ key: '/users', icon: <UserOutlined />, label: 'Users' }]
+    { key: '/dashboard', icon: <DashboardOutlined />, label: t('menu.dashboard') },
+    ...(canReadCustomers
+      ? [{ key: '/customers', icon: <TeamOutlined />, label: t('menu.customers') }]
       : []),
-    { key: '/companies', icon: <BankOutlined />, label: 'Companies' },
+    ...(canReadAR
+      ? [{ key: '/ar/invoices', icon: <DollarOutlined />, label: t('menu.ar') }]
+      : []),
+    ...(canReadVendors
+      ? [{ key: '/vendors', icon: <ShopOutlined />, label: t('menu.vendors') }]
+      : []),
+    ...(canReadAP
+      ? [{ key: '/ap/bills', icon: <AccountBookOutlined />, label: t('menu.ap') }]
+      : []),
+    ...(canManageUsers
+      ? [{ key: '/users', icon: <UserOutlined />, label: t('menu.users') }]
+      : []),
+    { key: '/companies', icon: <BankOutlined />, label: t('menu.companies') },
   ];
 
   const userMenuItems = [
     { key: 'name', label: user?.display_name, disabled: true },
     { type: 'divider' as const },
-    { key: 'password', icon: <KeyOutlined />, label: 'Change Password' },
-    { key: 'logout', icon: <LogoutOutlined />, label: 'Logout', danger: true },
+    { key: 'password', icon: <KeyOutlined />, label: t('menu.changePassword') },
+    { key: 'logout', icon: <LogoutOutlined />, label: t('menu.logout'), danger: true },
   ];
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Sider trigger={null} collapsible collapsed={collapsed} theme="dark">
         <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: collapsed ? 16 : 20, fontWeight: 'bold' }}>
-          {collapsed ? 'FMS' : 'FMS System'}
+          {collapsed ? t('menu.fms') : t('menu.fmsSystem')}
         </div>
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[location.pathname]}
+          selectedKeys={[
+            menuItems.find((item) => location.pathname.startsWith(item.key))?.key || location.pathname,
+          ]}
           items={menuItems}
           onClick={({ key }) => navigate(key)}
         />
@@ -101,6 +131,13 @@ export function MainLayout() {
                 {currentCompany?.short_name || currentCompany?.company_name}
               </span>
             )}
+            <Button
+              type="text"
+              icon={<GlobalOutlined />}
+              onClick={toggleLanguage}
+            >
+              {i18n.language === 'zh-TW' ? 'EN' : '中文'}
+            </Button>
             <Dropdown
               menu={{
                 items: userMenuItems,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Form, Input, Button, Select, Typography, message, Space, Spin, Divider } from 'antd';
+import { Card, Form, Input, Button, Select, Typography, message, Space, Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { usersApi } from '../../api/users.api';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -21,6 +22,7 @@ export function UserEditPage() {
   const [rolesForm] = Form.useForm();
   const navigate = useNavigate();
   const currentCompany = useAuthStore((s) => s.currentCompany);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!id) return;
@@ -39,7 +41,7 @@ export function UserEditPage() {
           role_ids: userData.roles?.map((r: Role) => r.role_id) || [],
         });
       })
-      .catch(() => message.error('Failed to load user'))
+      .catch(() => message.error(t('users.loadFailed')))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -48,9 +50,9 @@ export function UserEditPage() {
     setSaving(true);
     try {
       await usersApi.update(id, values);
-      message.success('User updated successfully');
+      message.success(t('users.updateSuccess'));
     } catch (err: any) {
-      message.error(err.response?.data?.error?.message || 'Failed to update');
+      message.error(err.response?.data?.error?.message || t('users.updateFailed'));
     } finally {
       setSaving(false);
     }
@@ -64,9 +66,9 @@ export function UserEditPage() {
         company_id: currentCompany.company_id,
         role_ids: values.role_ids,
       });
-      message.success('Roles updated successfully');
+      message.success(t('users.rolesUpdateSuccess'));
     } catch (err: any) {
-      message.error(err.response?.data?.error?.message || 'Failed to update roles');
+      message.error(err.response?.data?.error?.message || t('users.rolesUpdateFailed'));
     } finally {
       setSaving(false);
     }
@@ -77,43 +79,43 @@ export function UserEditPage() {
 
   return (
     <div>
-      <Title level={3}>Edit User: {user.display_name}</Title>
+      <Title level={3}>{t('users.editUser', { name: user.display_name })}</Title>
 
-      <Card title="User Information" style={{ maxWidth: 600, marginBottom: 16 }}>
+      <Card title={t('users.userInfo')} style={{ maxWidth: 600, marginBottom: 16 }}>
         <Form form={form} layout="vertical" onFinish={handleUpdate}>
-          <Form.Item label="Username"><Input value={user.username} disabled /></Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
+          <Form.Item label={t('users.username')}><Input value={user.username} disabled /></Form.Item>
+          <Form.Item name="email" label={t('users.email')} rules={[{ required: true, type: 'email' }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="display_name" label="Display Name" rules={[{ required: true }]}>
+          <Form.Item name="display_name" label={t('users.displayName')} rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="status" label="Status">
-            <Select options={[{ value: 'ACTIVE', label: 'Active' }, { value: 'INACTIVE', label: 'Inactive' }]} />
+          <Form.Item name="status" label={t('common.status')}>
+            <Select options={[{ value: 'ACTIVE', label: t('common.active') }, { value: 'INACTIVE', label: t('common.inactive') }]} />
           </Form.Item>
-          <Form.Item name="password" label="New Password (leave blank to keep current)">
+          <Form.Item name="password" label={t('users.newPassword')}>
             <Input.Password />
           </Form.Item>
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit" loading={saving}>Save</Button>
-              <Button onClick={() => navigate('/users')}>Back</Button>
+              <Button type="primary" htmlType="submit" loading={saving}>{t('common.save')}</Button>
+              <Button onClick={() => navigate('/users')}>{t('common.back')}</Button>
             </Space>
           </Form.Item>
         </Form>
       </Card>
 
-      <Card title={`Roles in ${currentCompany?.company_name}`} style={{ maxWidth: 600 }}>
+      <Card title={t('users.rolesIn', { company: currentCompany?.company_name })} style={{ maxWidth: 600 }}>
         <Form form={rolesForm} layout="vertical" onFinish={handleRoles}>
-          <Form.Item name="role_ids" label="Assigned Roles">
+          <Form.Item name="role_ids" label={t('users.assignedRoles')}>
             <Select
               mode="multiple"
-              placeholder="Select roles"
+              placeholder={t('users.selectRoles')}
               options={roles.map((r) => ({ value: r.role_id, label: r.role_name }))}
             />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={saving}>Update Roles</Button>
+            <Button type="primary" htmlType="submit" loading={saving}>{t('users.updateRoles')}</Button>
           </Form.Item>
         </Form>
       </Card>

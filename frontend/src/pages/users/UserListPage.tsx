@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Input, Tag, Space, Typography, message } from 'antd';
 import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { usersApi } from '../../api/users.api';
 
 const { Title } = Typography;
@@ -22,6 +23,7 @@ export function UserListPage() {
   const [search, setSearch] = useState('');
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const fetchUsers = async (page = 1, pageSize = 20) => {
     setLoading(true);
@@ -34,7 +36,7 @@ export function UserListPage() {
         total: res.data.meta.total,
       });
     } catch {
-      message.error('Failed to load users');
+      message.error(t('users.loadFailed'));
     } finally {
       setLoading(false);
     }
@@ -45,11 +47,11 @@ export function UserListPage() {
   }, []);
 
   const columns = [
-    { title: 'Username', dataIndex: 'username', key: 'username' },
-    { title: 'Name', dataIndex: 'display_name', key: 'display_name' },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
+    { title: t('users.username'), dataIndex: 'username', key: 'username' },
+    { title: t('users.name'), dataIndex: 'display_name', key: 'display_name' },
+    { title: t('users.email'), dataIndex: 'email', key: 'email' },
     {
-      title: 'Status',
+      title: t('common.status'),
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
@@ -58,17 +60,17 @@ export function UserListPage() {
       },
     },
     {
-      title: 'Roles',
+      title: t('users.roles'),
       key: 'roles',
       render: (_: unknown, record: User) =>
         record.roles?.map((r) => <Tag key={r.role_id} color="blue">{r.role_name}</Tag>),
     },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
       render: (_: unknown, record: User) => (
         <Button type="link" onClick={() => navigate(`/users/${record.user_id}/edit`)}>
-          Edit
+          {t('common.edit')}
         </Button>
       ),
     },
@@ -77,14 +79,14 @@ export function UserListPage() {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <Title level={3} style={{ margin: 0 }}>Users</Title>
+        <Title level={3} style={{ margin: 0 }}>{t('users.title')}</Title>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/users/create')}>
-          Create User
+          {t('users.createUser')}
         </Button>
       </div>
       <Space style={{ marginBottom: 16 }}>
         <Input
-          placeholder="Search users..."
+          placeholder={t('users.searchPlaceholder')}
           prefix={<SearchOutlined />}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -92,7 +94,7 @@ export function UserListPage() {
           style={{ width: 300 }}
           allowClear
         />
-        <Button onClick={() => fetchUsers(1)}>Search</Button>
+        <Button onClick={() => fetchUsers(1)}>{t('common.search')}</Button>
       </Space>
       <Table
         columns={columns}
@@ -102,7 +104,7 @@ export function UserListPage() {
         pagination={{
           ...pagination,
           showSizeChanger: true,
-          showTotal: (total) => `Total ${total} users`,
+          showTotal: (total) => t('common.total', { count: total }),
           onChange: (page, pageSize) => fetchUsers(page, pageSize),
         }}
       />

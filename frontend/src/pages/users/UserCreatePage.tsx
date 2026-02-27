@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Form, Input, Button, Select, Typography, message, Space } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { usersApi } from '../../api/users.api';
 import { useAuthStore } from '../../stores/authStore';
 
@@ -17,6 +18,7 @@ export function UserCreatePage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const navigate = useNavigate();
   const currentCompany = useAuthStore((s) => s.currentCompany);
+  const { t } = useTranslation();
 
   useEffect(() => {
     usersApi.getRoles().then((res) => setRoles(res.data.data)).catch(() => {});
@@ -29,10 +31,10 @@ export function UserCreatePage() {
         ...values,
         company_id: currentCompany?.company_id,
       });
-      message.success('User created successfully');
+      message.success(t('users.createSuccess'));
       navigate('/users');
     } catch (err: any) {
-      const msg = err.response?.data?.error?.message || 'Failed to create user';
+      const msg = err.response?.data?.error?.message || t('users.createFailed');
       message.error(msg);
     } finally {
       setLoading(false);
@@ -41,28 +43,28 @@ export function UserCreatePage() {
 
   return (
     <div>
-      <Title level={3}>Create User</Title>
+      <Title level={3}>{t('users.createUser')}</Title>
       <Card style={{ maxWidth: 600 }}>
         <Form layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="username" label="Username" rules={[{ required: true }, { min: 3 }, { pattern: /^[a-zA-Z0-9_]+$/, message: 'Only letters, numbers and underscores' }]}>
+          <Form.Item name="username" label={t('users.username')} rules={[{ required: true }, { min: 3 }, { pattern: /^[a-zA-Z0-9_]+$/, message: t('users.usernamePattern') }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}>
+          <Form.Item name="email" label={t('users.email')} rules={[{ required: true, type: 'email' }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="password" label="Password" rules={[{ required: true }, { min: 8 }]}>
+          <Form.Item name="password" label={t('users.password')} rules={[{ required: true }, { min: 8 }]}>
             <Input.Password />
           </Form.Item>
-          <Form.Item name="display_name" label="Display Name" rules={[{ required: true }]}>
+          <Form.Item name="display_name" label={t('users.displayName')} rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="role_ids" label="Roles">
-            <Select mode="multiple" placeholder="Select roles" options={roles.map((r) => ({ value: r.role_id, label: r.role_name }))} />
+          <Form.Item name="role_ids" label={t('users.roles')}>
+            <Select mode="multiple" placeholder={t('users.selectRoles')} options={roles.map((r) => ({ value: r.role_id, label: r.role_name }))} />
           </Form.Item>
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit" loading={loading}>Create</Button>
-              <Button onClick={() => navigate('/users')}>Cancel</Button>
+              <Button type="primary" htmlType="submit" loading={loading}>{t('common.create')}</Button>
+              <Button onClick={() => navigate('/users')}>{t('common.cancel')}</Button>
             </Space>
           </Form.Item>
         </Form>

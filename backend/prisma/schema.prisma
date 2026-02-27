@@ -115,6 +115,10 @@ model Company {
 
   user_companies     UserCompany[]
   user_company_roles UserCompanyRole[]
+  customers          Customer[]
+  ar_invoices        ArInvoice[]
+  vendors            Vendor[]
+  ap_bills           ApBill[]
 
   @@map("companies")
 }
@@ -131,4 +135,179 @@ model UserCompany {
 
   @@unique([user_id, company_id])
   @@map("user_companies")
+}
+
+// ─── M03: Customer Management ────────────────────────────
+
+model Customer {
+  customer_id    String   @id @default(uuid()) @db.Uuid
+  customer_code  String   @db.VarChar(20)
+  customer_name  String   @db.VarChar(200)
+  short_name     String?  @db.VarChar(50)
+  tax_id         String?  @db.VarChar(8)
+  contact_person String?  @db.VarChar(100)
+  phone          String?  @db.VarChar(30)
+  fax            String?  @db.VarChar(30)
+  email          String?  @db.VarChar(255)
+  address        String?
+  payment_terms  Int      @default(30)
+  credit_limit   Decimal  @default(0) @db.Decimal(15, 2)
+  notes          String?
+  status         String   @default("ACTIVE") @db.VarChar(10)
+  company_id     String   @db.Uuid
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  company  Company     @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  invoices ArInvoice[]
+
+  @@unique([company_id, customer_code])
+  @@index([company_id])
+  @@map("customers")
+}
+
+// ─── M04: Accounts Receivable ────────────────────────────
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  VOID
+}
+
+model ArInvoice {
+  invoice_id     String        @id @default(uuid()) @db.Uuid
+  invoice_number String        @db.VarChar(30)
+  customer_id    String        @db.Uuid
+  invoice_date   DateTime      @db.Date
+  due_date       DateTime      @db.Date
+  subtotal       Decimal       @db.Decimal(15, 2)
+  tax_amount     Decimal       @db.Decimal(15, 2)
+  total_amount   Decimal       @db.Decimal(15, 2)
+  paid_amount    Decimal       @default(0) @db.Decimal(15, 2)
+  currency       String        @default("TWD") @db.VarChar(3)
+  status         InvoiceStatus @default(DRAFT)
+  description    String?
+  notes          String?
+  company_id     String        @db.Uuid
+  created_by     String        @db.Uuid
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  customer Customer  @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  company  Company   @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  payments ArPayment[]
+
+  @@unique([company_id, invoice_number])
+  @@index([company_id, status])
+  @@index([customer_id])
+  @@index([due_date])
+  @@map("ar_invoices")
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  CHECK
+  CASH
+  CREDIT_CARD
+  OTHER
+}
+
+model ArPayment {
+  payment_id     String        @id @default(uuid()) @db.Uuid
+  invoice_id     String        @db.Uuid
+  payment_date   DateTime      @db.Date
+  amount         Decimal       @db.Decimal(15, 2)
+  payment_method PaymentMethod @default(BANK_TRANSFER)
+  reference_no   String?       @db.VarChar(50)
+  notes          String?
+  company_id     String        @db.Uuid
+  created_by     String        @db.Uuid
+  created_at     DateTime      @default(now())
+
+  invoice ArInvoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
+
+  @@index([invoice_id])
+  @@map("ar_payments")
+}
+
+// ─── M05: Vendor Management ────────────────────────────
+
+model Vendor {
+  vendor_id      String   @id @default(uuid()) @db.Uuid
+  vendor_code    String   @db.VarChar(20)
+  vendor_name    String   @db.VarChar(200)
+  short_name     String?  @db.VarChar(50)
+  tax_id         String?  @db.VarChar(8)
+  contact_person String?  @db.VarChar(100)
+  phone          String?  @db.VarChar(30)
+  fax            String?  @db.VarChar(30)
+  email          String?  @db.VarChar(255)
+  address        String?
+  payment_terms  Int      @default(30)
+  credit_limit   Decimal  @default(0) @db.Decimal(15, 2)
+  notes          String?
+  status         String   @default("ACTIVE") @db.VarChar(10)
+  company_id     String   @db.Uuid
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  company Company  @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  bills   ApBill[]
+
+  @@unique([company_id, vendor_code])
+  @@index([company_id])
+  @@map("vendors")
+}
+
+// ─── M06: Accounts Payable ─────────────────────────────
+
+model ApBill {
+  bill_id      String        @id @default(uuid()) @db.Uuid
+  bill_number  String        @db.VarChar(30)
+  vendor_id    String        @db.Uuid
+  bill_date    DateTime      @db.Date
+  due_date     DateTime      @db.Date
+  subtotal     Decimal       @db.Decimal(15, 2)
+  tax_amount   Decimal       @db.Decimal(15, 2)
+  total_amount Decimal       @db.Decimal(15, 2)
+  paid_amount  Decimal       @default(0) @db.Decimal(15, 2)
+  currency     String        @default("TWD") @db.VarChar(3)
+  status       InvoiceStatus @default(DRAFT)
+  description  String?
+  notes        String?
+  company_id   String        @db.Uuid
+  created_by   String        @db.Uuid
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+
+  vendor   Vendor      @relation(fields: [vendor_id], references: [vendor_id], onDelete: Cascade)
+  company  Company     @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  payments ApPayment[]
+
+  @@unique([company_id, bill_number])
+  @@index([company_id, status])
+  @@index([vendor_id])
+  @@index([due_date])
+  @@map("ap_bills")
+}
+
+model ApPayment {
+  payment_id     String        @id @default(uuid()) @db.Uuid
+  bill_id        String        @db.Uuid
+  payment_date   DateTime      @db.Date
+  amount         Decimal       @db.Decimal(15, 2)
+  payment_method PaymentMethod @default(BANK_TRANSFER)
+  reference_no   String?       @db.VarChar(50)
+  notes          String?
+  company_id     String        @db.Uuid
+  created_by     String        @db.Uuid
+  created_at     DateTime      @default(now())
+
+  bill ApBill @relation(fields: [bill_id], references: [bill_id], onDelete: Cascade)
+
+  @@index([bill_id])
+  @@map("ap_payments")
 }
