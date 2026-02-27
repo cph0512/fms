@@ -10,14 +10,12 @@ const { Title } = Typography;
 export function CompanyCreatePage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { companies } = useAuthStore();
-  const setCompanyData = useAuthStore((s) => s.setCompanyData);
   const { t } = useTranslation();
 
   const handleSubmit = async (values: any) => {
     setLoading(true);
     try {
-      const res = await companiesApi.create(values);
+      await companiesApi.create(values);
       message.success(t('companies.createSuccess'));
 
       // Refresh companies list in store

@@ -36,7 +36,6 @@ export function MainLayout() {
   const logout = useAuthStore((s) => s.logout);
   const setCompanyData = useAuthStore((s) => s.setCompanyData);
   const canManageUsers = usePermission('user.manage');
-  const canManageCompanies = usePermission('company.manage');
   const canReadCustomers = usePermission('customer.read');
   const canReadAR = usePermission('ar.read');
   const canReadVendors = usePermission('vendor.read');
