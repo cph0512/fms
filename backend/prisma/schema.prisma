@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── M00: Authentication ────────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  LOCKED
+}
+
+model User {
+  user_id         String     @id @default(uuid()) @db.Uuid
+  username        String     @unique @db.VarChar(50)
+  email           String     @unique @db.VarChar(255)
+  password_hash   String     @db.VarChar(255)
+  display_name    String     @db.VarChar(100)
+  status          UserStatus @default(ACTIVE)
+  last_login_at   DateTime?
+  failed_attempts Int        @default(0)
+  locked_until    DateTime?
+  created_at      DateTime   @default(now())
+  updated_at      DateTime   @updatedAt
+
+  user_companies     UserCompany[]
+  user_company_roles UserCompanyRole[]
+
+  @@map("users")
+}
+
+// ─── M01: Roles & Permissions ───────────────────────────
+
+model Role {
+  role_id     Int     @id @default(autoincrement())
+  role_name   String  @unique @db.VarChar(50)
+  description String? @db.VarChar(255)
+  is_system   Boolean @default(false)
+  created_at  DateTime @default(now())
+
+  role_permissions   RolePermission[]
+  user_company_roles UserCompanyRole[]
+
+  @@map("roles")
+}
+
+model Permission {
+  permission_id   Int    @id @default(autoincrement())
+  permission_code String @unique @db.VarChar(50)
+  permission_name String @db.VarChar(100)
+  module          String @db.VarChar(50)
+  created_at      DateTime @default(now())
+
+  role_permissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model RolePermission {
+  id            Int @id @default(autoincrement())
+  role_id       Int
+  permission_id Int
+
+  role       Role       @relation(fields: [role_id], references: [role_id], onDelete: Cascade)
+  permission Permission @relation(fields: [permission_id], references: [permission_id], onDelete: Cascade)
+
+  @@unique([role_id, permission_id])
+  @@map("role_permissions")
+}
+
+model UserCompanyRole {
+  id         Int    @id @default(autoincrement())
+  user_id    String @db.Uuid
+  role_id    Int
+  company_id String @db.Uuid
+
+  user    User    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  role    Role    @relation(fields: [role_id], references: [role_id], onDelete: Cascade)
+  company Company @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+
+  @@unique([user_id, role_id, company_id])
+  @@index([user_id, company_id])
+  @@map("user_company_roles")
+}
+
+// ─── M02: Companies ─────────────────────────────────────
+
+enum CompanyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model Company {
+  company_id        String        @id @default(uuid()) @db.Uuid
+  company_name      String        @db.VarChar(200)
+  short_name        String?       @db.VarChar(50)
+  tax_id            String?       @db.VarChar(8)
+  representative    String?       @db.VarChar(50)
+  phone             String?       @db.VarChar(20)
+  fax               String?       @db.VarChar(20)
+  address           String?
+  email             String?       @db.VarChar(100)
+  default_currency  String        @default("TWD") @db.VarChar(3)
+  tax_rate          Decimal       @default(5.00) @db.Decimal(5, 2)
+  fiscal_year_start Int           @default(1)
+  logo_url          String?       @db.VarChar(500)
+  status            CompanyStatus @default(ACTIVE)
+  created_at        DateTime      @default(now())
+  updated_at        DateTime      @updatedAt
+
+  user_companies     UserCompany[]
+  user_company_roles UserCompanyRole[]
+
+  @@map("companies")
+}
+
+model UserCompany {
+  id         Int      @id @default(autoincrement())
+  user_id    String   @db.Uuid
+  company_id String   @db.Uuid
+  is_default Boolean  @default(false)
+  joined_at  DateTime @default(now())
+
+  user    User    @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  company Company @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+
+  @@unique([user_id, company_id])
+  @@map("user_companies")
+}
