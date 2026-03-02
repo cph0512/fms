@@ -28,6 +28,22 @@ import { VendorEditPage } from './pages/vendors/VendorEditPage';
 import { ApBillListPage } from './pages/ap/ApBillListPage';
 import { ApBillCreatePage } from './pages/ap/ApBillCreatePage';
 import { ApBillDetailPage } from './pages/ap/ApBillDetailPage';
+import { AccountListPage } from './pages/accounts/AccountListPage';
+import { AccountCreatePage } from './pages/accounts/AccountCreatePage';
+import { AccountEditPage } from './pages/accounts/AccountEditPage';
+import { BankAccountListPage } from './pages/bank-accounts/BankAccountListPage';
+import { BankAccountCreatePage } from './pages/bank-accounts/BankAccountCreatePage';
+import { BankAccountEditPage } from './pages/bank-accounts/BankAccountEditPage';
+import { JournalEntryListPage } from './pages/journal/JournalEntryListPage';
+import { JournalEntryCreatePage } from './pages/journal/JournalEntryCreatePage';
+import { JournalEntryDetailPage } from './pages/journal/JournalEntryDetailPage';
+import { AccountLedgerPage } from './pages/gl/AccountLedgerPage';
+import { TrialBalancePage } from './pages/gl/TrialBalancePage';
+import { BalanceSheetPage } from './pages/reports/BalanceSheetPage';
+import { IncomeStatementPage } from './pages/reports/IncomeStatementPage';
+import { BudgetListPage } from './pages/budgets/BudgetListPage';
+import { BudgetCreatePage } from './pages/budgets/BudgetCreatePage';
+import { BudgetDetailPage } from './pages/budgets/BudgetDetailPage';
 
 const antdLocales: Record<string, typeof zhTW> = {
   'zh-TW': zhTW,
@@ -134,6 +150,88 @@ function App() {
                 }
               />
               <Route path=":id" element={<ApBillDetailPage />} />
+            </Route>
+
+            {/* Chart of Accounts */}
+            <Route path="/accounts" element={<PermissionRoute permission="accounting.read" />}>
+              <Route index element={<AccountListPage />} />
+              <Route
+                path="create"
+                element={
+                  <PermissionRoute permission="accounting.write">
+                    <AccountCreatePage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path=":id/edit"
+                element={
+                  <PermissionRoute permission="accounting.write">
+                    <AccountEditPage />
+                  </PermissionRoute>
+                }
+              />
+            </Route>
+
+            {/* Bank Accounts */}
+            <Route path="/bank-accounts" element={<PermissionRoute permission="bank.read" />}>
+              <Route index element={<BankAccountListPage />} />
+              <Route
+                path="create"
+                element={
+                  <PermissionRoute permission="bank.write">
+                    <BankAccountCreatePage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path=":id/edit"
+                element={
+                  <PermissionRoute permission="bank.write">
+                    <BankAccountEditPage />
+                  </PermissionRoute>
+                }
+              />
+            </Route>
+
+            {/* Journal Entries */}
+            <Route path="/journal/entries" element={<PermissionRoute permission="accounting.read" />}>
+              <Route index element={<JournalEntryListPage />} />
+              <Route
+                path="create"
+                element={
+                  <PermissionRoute permission="accounting.write">
+                    <JournalEntryCreatePage />
+                  </PermissionRoute>
+                }
+              />
+              <Route path=":id" element={<JournalEntryDetailPage />} />
+            </Route>
+
+            {/* General Ledger */}
+            <Route path="/gl" element={<PermissionRoute permission="accounting.read" />}>
+              <Route path="ledger" element={<AccountLedgerPage />} />
+              <Route path="trial-balance" element={<TrialBalancePage />} />
+            </Route>
+
+            {/* Financial Reports */}
+            <Route path="/reports" element={<PermissionRoute permission="accounting.read" />}>
+              <Route path="balance-sheet" element={<BalanceSheetPage />} />
+              <Route path="income-statement" element={<IncomeStatementPage />} />
+            </Route>
+
+            {/* Budgets */}
+            <Route path="/budgets" element={<PermissionRoute permission="budget.read" />}>
+              <Route index element={<BudgetListPage />} />
+              <Route
+                path="create"
+                element={
+                  <PermissionRoute permission="budget.write">
+                    <BudgetCreatePage />
+                  </PermissionRoute>
+                }
+              />
+              <Route path=":id" element={<BudgetDetailPage />} />
             </Route>
 
             {/* Company Management */}

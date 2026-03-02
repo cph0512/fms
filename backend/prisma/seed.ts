@@ -14,6 +14,12 @@ const PERMISSIONS = [
   { code: 'vendor.write', name: 'Create/Edit Vendors', module: 'vendors' },
   { code: 'ap.read', name: 'View Accounts Payable', module: 'ap' },
   { code: 'ap.write', name: 'Create/Edit AP Entries', module: 'ap' },
+  { code: 'accounting.read', name: 'View Chart of Accounts & GL', module: 'accounting' },
+  { code: 'accounting.write', name: 'Create/Edit Accounts & Journal Entries', module: 'accounting' },
+  { code: 'bank.read', name: 'View Bank Accounts', module: 'bank' },
+  { code: 'bank.write', name: 'Create/Edit Bank Accounts', module: 'bank' },
+  { code: 'budget.read', name: 'View Budgets', module: 'budgets' },
+  { code: 'budget.write', name: 'Create/Edit Budgets', module: 'budgets' },
 ];
 
 const ROLES = [
@@ -31,6 +37,9 @@ const ROLES = [
       'ar.read', 'ar.write',
       'vendor.read', 'vendor.write',
       'ap.read', 'ap.write',
+      'accounting.read', 'accounting.write',
+      'bank.read', 'bank.write',
+      'budget.read', 'budget.write',
     ],
   },
   {
@@ -41,6 +50,9 @@ const ROLES = [
       'ar.read', 'ar.write',
       'vendor.read', 'vendor.write',
       'ap.read', 'ap.write',
+      'accounting.read', 'accounting.write',
+      'bank.read', 'bank.write',
+      'budget.read', 'budget.write',
     ],
   },
   {
@@ -56,7 +68,7 @@ const ROLES = [
   {
     name: 'Viewer',
     description: 'Read-only access',
-    permissions: ['customer.read', 'ar.read', 'vendor.read', 'ap.read'],
+    permissions: ['customer.read', 'ar.read', 'vendor.read', 'ap.read', 'accounting.read', 'bank.read', 'budget.read'],
   },
 ];
 

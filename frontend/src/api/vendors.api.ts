@@ -12,6 +12,10 @@ export interface CreateVendorRequest {
   payment_terms?: number;
   credit_limit?: number;
   notes?: string;
+  bank_name?: string;
+  bank_branch?: string;
+  bank_account_number?: string;
+  bank_account_name?: string;
 }
 
 export interface UpdateVendorRequest extends Partial<CreateVendorRequest> {

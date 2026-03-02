@@ -119,6 +119,10 @@ model Company {
   ar_invoices        ArInvoice[]
   vendors            Vendor[]
   ap_bills           ApBill[]
+  accounts           Account[]
+  bank_accounts      BankAccount[]
+  journal_entries    JournalEntry[]
+  budgets            Budget[]
 
   @@map("companies")
 }
@@ -236,23 +240,27 @@ model ArPayment {
 // ─── M05: Vendor Management ────────────────────────────
 
 model Vendor {
-  vendor_id      String   @id @default(uuid()) @db.Uuid
-  vendor_code    String   @db.VarChar(20)
-  vendor_name    String   @db.VarChar(200)
-  short_name     String?  @db.VarChar(50)
-  tax_id         String?  @db.VarChar(8)
-  contact_person String?  @db.VarChar(100)
-  phone          String?  @db.VarChar(30)
-  fax            String?  @db.VarChar(30)
-  email          String?  @db.VarChar(255)
-  address        String?
-  payment_terms  Int      @default(30)
-  credit_limit   Decimal  @default(0) @db.Decimal(15, 2)
-  notes          String?
-  status         String   @default("ACTIVE") @db.VarChar(10)
-  company_id     String   @db.Uuid
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  vendor_id           String   @id @default(uuid()) @db.Uuid
+  vendor_code         String   @db.VarChar(20)
+  vendor_name         String   @db.VarChar(200)
+  short_name          String?  @db.VarChar(50)
+  tax_id              String?  @db.VarChar(8)
+  contact_person      String?  @db.VarChar(100)
+  phone               String?  @db.VarChar(30)
+  fax                 String?  @db.VarChar(30)
+  email               String?  @db.VarChar(255)
+  address             String?
+  payment_terms       Int      @default(30)
+  credit_limit        Decimal  @default(0) @db.Decimal(15, 2)
+  bank_name           String?  @db.VarChar(100)
+  bank_branch         String?  @db.VarChar(100)
+  bank_account_number String?  @db.VarChar(50)
+  bank_account_name   String?  @db.VarChar(100)
+  notes               String?
+  status              String   @default("ACTIVE") @db.VarChar(10)
+  company_id          String   @db.Uuid
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 
   company Company  @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
   bills   ApBill[]
@@ -310,4 +318,159 @@ model ApPayment {
 
   @@index([bill_id])
   @@map("ap_payments")
+}
+
+// ─── M07: Chart of Accounts ─────────────────────────────
+
+enum AccountType {
+  ASSET
+  LIABILITY
+  EQUITY
+  REVENUE
+  EXPENSE
+}
+
+model Account {
+  account_id        String      @id @default(uuid()) @db.Uuid
+  account_code      String      @db.VarChar(20)
+  account_name      String      @db.VarChar(200)
+  account_type      AccountType
+  parent_account_id String?     @db.Uuid
+  description       String?
+  is_active         Boolean     @default(true)
+  level             Int         @default(1)
+  company_id        String      @db.Uuid
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+
+  parent        Account?           @relation("AccountTree", fields: [parent_account_id], references: [account_id])
+  children      Account[]          @relation("AccountTree")
+  company       Company            @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  journal_lines JournalEntryLine[]
+  budget_lines  BudgetLine[]
+
+  @@unique([company_id, account_code])
+  @@index([company_id])
+  @@map("accounts")
+}
+
+// ─── M08: Journal Entries ───────────────────────────────
+
+enum JournalStatus {
+  DRAFT
+  POSTED
+  VOID
+}
+
+model JournalEntry {
+  entry_id     String        @id @default(uuid()) @db.Uuid
+  entry_number String        @db.VarChar(30)
+  entry_date   DateTime      @db.Date
+  description  String?
+  status       JournalStatus @default(DRAFT)
+  posted_at    DateTime?
+  voided_at    DateTime?
+  company_id   String        @db.Uuid
+  created_by   String        @db.Uuid
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+
+  lines   JournalEntryLine[]
+  company Company            @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+
+  @@unique([company_id, entry_number])
+  @@index([company_id, status])
+  @@index([entry_date])
+  @@map("journal_entries")
+}
+
+model JournalEntryLine {
+  line_id       String  @id @default(uuid()) @db.Uuid
+  entry_id      String  @db.Uuid
+  account_id    String  @db.Uuid
+  debit_amount  Decimal @default(0) @db.Decimal(15, 2)
+  credit_amount Decimal @default(0) @db.Decimal(15, 2)
+  description   String?
+  line_order    Int     @default(0)
+
+  entry   JournalEntry @relation(fields: [entry_id], references: [entry_id], onDelete: Cascade)
+  account Account      @relation(fields: [account_id], references: [account_id])
+
+  @@index([entry_id])
+  @@index([account_id])
+  @@map("journal_entry_lines")
+}
+
+// ─── M11: Bank Accounts ─────────────────────────────────
+
+model BankAccount {
+  bank_account_id String   @id @default(uuid()) @db.Uuid
+  account_name    String   @db.VarChar(200)
+  bank_name       String   @db.VarChar(100)
+  branch_name     String?  @db.VarChar(100)
+  account_number  String   @db.VarChar(50)
+  currency        String   @default("TWD") @db.VarChar(3)
+  opening_balance Decimal  @default(0) @db.Decimal(15, 2)
+  current_balance Decimal  @default(0) @db.Decimal(15, 2)
+  is_active       Boolean  @default(true)
+  notes           String?
+  company_id      String   @db.Uuid
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  company Company @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+
+  @@unique([company_id, account_number])
+  @@index([company_id])
+  @@map("bank_accounts")
+}
+
+// ─── M12: Budget Management ─────────────────────────────
+
+enum BudgetStatus {
+  DRAFT
+  APPROVED
+  CLOSED
+}
+
+model Budget {
+  budget_id   String       @id @default(uuid()) @db.Uuid
+  fiscal_year Int
+  name        String       @db.VarChar(200)
+  description String?
+  status      BudgetStatus @default(DRAFT)
+  company_id  String       @db.Uuid
+  created_by  String       @db.Uuid
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  lines   BudgetLine[]
+  company Company      @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+
+  @@unique([company_id, fiscal_year, name])
+  @@map("budgets")
+}
+
+model BudgetLine {
+  line_id    String  @id @default(uuid()) @db.Uuid
+  budget_id  String  @db.Uuid
+  account_id String  @db.Uuid
+  month_01   Decimal @default(0) @db.Decimal(15, 2)
+  month_02   Decimal @default(0) @db.Decimal(15, 2)
+  month_03   Decimal @default(0) @db.Decimal(15, 2)
+  month_04   Decimal @default(0) @db.Decimal(15, 2)
+  month_05   Decimal @default(0) @db.Decimal(15, 2)
+  month_06   Decimal @default(0) @db.Decimal(15, 2)
+  month_07   Decimal @default(0) @db.Decimal(15, 2)
+  month_08   Decimal @default(0) @db.Decimal(15, 2)
+  month_09   Decimal @default(0) @db.Decimal(15, 2)
+  month_10   Decimal @default(0) @db.Decimal(15, 2)
+  month_11   Decimal @default(0) @db.Decimal(15, 2)
+  month_12   Decimal @default(0) @db.Decimal(15, 2)
+
+  budget  Budget  @relation(fields: [budget_id], references: [budget_id], onDelete: Cascade)
+  account Account @relation(fields: [account_id], references: [account_id])
+
+  @@unique([budget_id, account_id])
+  @@map("budget_lines")
 }

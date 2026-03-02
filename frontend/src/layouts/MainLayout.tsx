@@ -9,6 +9,11 @@ import {
   DollarOutlined,
   ShopOutlined,
   AccountBookOutlined,
+  BookOutlined,
+  FormOutlined,
+  AuditOutlined,
+  BarChartOutlined,
+  FundOutlined,
   LogoutOutlined,
   KeyOutlined,
   MenuFoldOutlined,
@@ -40,6 +45,9 @@ export function MainLayout() {
   const canReadAR = usePermission('ar.read');
   const canReadVendors = usePermission('vendor.read');
   const canReadAP = usePermission('ap.read');
+  const canReadAccounting = usePermission('accounting.read');
+  const canReadBank = usePermission('bank.read');
+  const canReadBudget = usePermission('budget.read');
 
   const handleLogout = async () => {
     await logout();
@@ -75,6 +83,36 @@ export function MainLayout() {
       : []),
     ...(canReadAP
       ? [{ key: '/ap/bills', icon: <AccountBookOutlined />, label: t('menu.ap') }]
+      : []),
+    ...(canReadAccounting
+      ? [
+          { key: '/accounts', icon: <BookOutlined />, label: t('menu.accounts') },
+          { key: '/journal/entries', icon: <FormOutlined />, label: t('menu.journal') },
+          {
+            key: 'gl-sub',
+            icon: <AuditOutlined />,
+            label: t('menu.gl'),
+            children: [
+              { key: '/gl/ledger', label: t('gl.accountLedger') },
+              { key: '/gl/trial-balance', label: t('gl.trialBalance') },
+            ],
+          },
+          {
+            key: 'reports-sub',
+            icon: <BarChartOutlined />,
+            label: t('menu.reports'),
+            children: [
+              { key: '/reports/balance-sheet', label: t('menu.balanceSheet') },
+              { key: '/reports/income-statement', label: t('menu.incomeStatement') },
+            ],
+          },
+        ]
+      : []),
+    ...(canReadBank
+      ? [{ key: '/bank-accounts', icon: <BankOutlined />, label: t('menu.bankAccounts') }]
+      : []),
+    ...(canReadBudget
+      ? [{ key: '/budgets', icon: <FundOutlined />, label: t('menu.budgets') }]
       : []),
     ...(canManageUsers
       ? [{ key: '/users', icon: <UserOutlined />, label: t('menu.users') }]

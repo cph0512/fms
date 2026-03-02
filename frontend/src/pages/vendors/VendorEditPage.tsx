@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Card, Form, Input, InputNumber, Select, Button, Typography, message, Space, Spin, Row, Col } from 'antd';
+import { Card, Form, Input, InputNumber, Select, Button, Typography, message, Space, Spin, Row, Col, Divider } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { vendorsApi } from '../../api/vendors.api';
 
@@ -34,6 +34,10 @@ export function VendorEditPage() {
           address: v.address,
           payment_terms: v.payment_terms,
           credit_limit: Number(v.credit_limit),
+          bank_name: v.bank_name,
+          bank_branch: v.bank_branch,
+          bank_account_number: v.bank_account_number,
+          bank_account_name: v.bank_account_name,
           notes: v.notes,
           status: v.status,
         });
@@ -120,6 +124,31 @@ export function VendorEditPage() {
             <Col span={8}>
               <Form.Item name="credit_limit" label={t('vendors.creditLimit')}>
                 <InputNumber min={0} style={{ width: '100%' }} formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')} parser={(v) => v!.replace(/,/g, '') as any} />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Divider titlePlacement="left">{t('vendors.bankInfo')}</Divider>
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item name="bank_name" label={t('vendors.bankName')}>
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="bank_branch" label={t('vendors.bankBranch')}>
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item name="bank_account_number" label={t('vendors.bankAccountNumber')}>
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="bank_account_name" label={t('vendors.bankAccountName')}>
+                <Input />
               </Form.Item>
             </Col>
           </Row>

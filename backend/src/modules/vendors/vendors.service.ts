@@ -60,6 +60,10 @@ export async function createVendor(
     address?: string;
     payment_terms?: number;
     credit_limit?: number;
+    bank_name?: string;
+    bank_branch?: string;
+    bank_account_number?: string;
+    bank_account_name?: string;
     notes?: string;
   },
   companyId: string
@@ -91,6 +95,10 @@ export async function createVendor(
       address: data.address,
       payment_terms: data.payment_terms ?? 30,
       credit_limit: data.credit_limit ?? 0,
+      bank_name: data.bank_name,
+      bank_branch: data.bank_branch,
+      bank_account_number: data.bank_account_number,
+      bank_account_name: data.bank_account_name,
       notes: data.notes,
       company_id: companyId,
     },

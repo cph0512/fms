@@ -10,6 +10,13 @@ import customersRoutes from './modules/customers/customers.routes.js';
 import arRoutes from './modules/ar/ar.routes.js';
 import vendorsRoutes from './modules/vendors/vendors.routes.js';
 import apRoutes from './modules/ap/ap.routes.js';
+import accountsRoutes from './modules/accounts/accounts.routes.js';
+import bankAccountsRoutes from './modules/bank-accounts/bank-accounts.routes.js';
+import journalRoutes from './modules/journal/journal.routes.js';
+import glRoutes from './modules/gl/gl.routes.js';
+import reportsRoutes from './modules/reports/reports.routes.js';
+import budgetsRoutes from './modules/budgets/budgets.routes.js';
+import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
 import { successResponse } from './shared/utils/response.js';
 
 export const app = express();
@@ -32,6 +39,13 @@ app.use('/api/v1/customers', customersRoutes);
 app.use('/api/v1/ar', arRoutes);
 app.use('/api/v1/vendors', vendorsRoutes);
 app.use('/api/v1/ap', apRoutes);
+app.use('/api/v1/accounts', accountsRoutes);
+app.use('/api/v1/bank-accounts', bankAccountsRoutes);
+app.use('/api/v1/journal', journalRoutes);
+app.use('/api/v1/gl', glRoutes);
+app.use('/api/v1/reports', reportsRoutes);
+app.use('/api/v1/budgets', budgetsRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 // 404 handler
 app.use((_req, res) => {
