@@ -641,6 +641,9 @@ export default {
     estimatedTax: 'Estimated Tax',
     estimatedTotal: 'Estimated Total',
     includedTrips: 'Included Trips',
+    downloadBillingDetail: 'Download Billing Detail',
+    exportSuccess: 'Billing detail downloaded',
+    exportFailed: 'Failed to download billing detail',
   },
 
   // Permission

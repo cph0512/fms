@@ -18,11 +18,12 @@ import {
   Tag,
   Spin,
 } from 'antd';
-import { FileTextOutlined } from '@ant-design/icons';
+import { FileTextOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { deliveryTripsApi } from '../../api/delivery-trips.api';
 import { customersApi } from '../../api/customers.api';
 import { useAuthStore } from '../../stores/authStore';
+import { downloadFromResponse } from '../../utils/download';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -56,6 +57,7 @@ export function TripInvoicePage() {
   const [trips, setTrips] = useState<TripPreview[]>([]);
   const [tripsLoading, setTripsLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const [customerId, setCustomerId] = useState<string | undefined>();
   const [fromDate, setFromDate] = useState<dayjs.Dayjs | null>(dayjs().startOf('month'));
@@ -138,6 +140,27 @@ export function TripInvoicePage() {
       message.error(err.response?.data?.error?.message || t('delivery.invoiceGenerateFailed'));
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleExportBillingDetail = async () => {
+    if (!customerId || !fromDate || !toDate) {
+      message.warning(t('delivery.fillAllFields'));
+      return;
+    }
+    setExporting(true);
+    try {
+      const res = await deliveryTripsApi.exportBillingDetail({
+        customer_id: customerId,
+        from_date: fromDate.format('YYYY-MM-DD'),
+        to_date: toDate.format('YYYY-MM-DD'),
+      });
+      downloadFromResponse(res, '請款明細.xlsx');
+      message.success(t('delivery.exportSuccess'));
+    } catch (err: any) {
+      message.error(err.response?.data?.error?.message || t('delivery.exportFailed'));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -344,6 +367,15 @@ export function TripInvoicePage() {
               onClick={handleGenerate}
             >
               {t('delivery.generateInvoice')}
+            </Button>
+            <Button
+              size="large"
+              icon={<DownloadOutlined />}
+              loading={exporting}
+              disabled={trips.length === 0}
+              onClick={handleExportBillingDetail}
+            >
+              {t('delivery.downloadBillingDetail')}
             </Button>
             <Button size="large" onClick={() => navigate('/delivery-trips')}>
               {t('common.cancel')}

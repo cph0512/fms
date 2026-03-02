@@ -2,6 +2,7 @@ import { prisma } from '../../config/database.js';
 import { AppError } from '../../shared/errors/AppError.js';
 import { parsePagination, paginationMeta } from '../../shared/utils/pagination.js';
 import { parseDeliveryExcel, ParsedSheet } from './excel-parser.js';
+import { buildBillingDetailExcel } from './billing-export.js';
 
 export async function listTrips(
   companyId: string,
@@ -597,4 +598,94 @@ export async function importConfirm(
   }
 
   return { routesCreated, tripsCreated };
+}
+
+export async function exportBillingDetail(
+  companyId: string,
+  data: { customer_id: string; from_date: string; to_date: string }
+): Promise<{ buffer: Buffer; filename: string }> {
+  // 1. Fetch company info
+  const company = await prisma.company.findUnique({
+    where: { company_id: companyId },
+    select: { company_name: true, address: true, phone: true, tax_rate: true },
+  });
+  if (!company) throw new AppError(404, 'NOT_FOUND', 'Company not found');
+
+  // 2. Fetch customer
+  const customer = await prisma.customer.findFirst({
+    where: { customer_id: data.customer_id, company_id: companyId },
+    select: { customer_name: true, short_name: true, phone: true },
+  });
+  if (!customer) throw new AppError(404, 'NOT_FOUND', 'Customer not found');
+
+  // 3. Fetch CONFIRMED or BILLED trips in date range
+  const trips = await prisma.deliveryTrip.findMany({
+    where: {
+      company_id: companyId,
+      status: { in: ['CONFIRMED', 'BILLED'] },
+      route: { customer_id: data.customer_id },
+      trip_date: {
+        gte: new Date(data.from_date),
+        lte: new Date(data.to_date),
+      },
+    },
+    include: {
+      route: { select: { route_name: true, content_type: true } },
+    },
+    orderBy: { trip_date: 'asc' },
+  });
+
+  if (trips.length === 0) {
+    throw new AppError(400, 'NO_TRIPS', 'No trips found for the specified customer and date range');
+  }
+
+  // 4. Calculate totals
+  const subtotal = trips.reduce((sum, t) => sum + Number(t.amount), 0);
+  const taxRate = Number(company.tax_rate);
+  const taxAmount = Math.round(subtotal * taxRate / 100);
+  const total = subtotal + taxAmount;
+
+  // 5. Build date labels
+  const fromDate = new Date(data.from_date);
+  const toDate = new Date(data.to_date);
+  const fromMonth = fromDate.getMonth() + 1;
+  const fromDay = fromDate.getDate();
+  const toMonth = toDate.getMonth() + 1;
+  const toDay = toDate.getDate();
+  const dateRangeLabel = `${fromMonth}/${fromDay}-${toMonth}/${toDay}`;
+
+  // ROC year (民國年)
+  const rocYear = fromDate.getFullYear() - 1911;
+  const yearMonthLabel = `${rocYear}年${fromMonth}月份報價帳單`;
+  const effectiveDate = `${rocYear}/${fromMonth}`;
+
+  // 6. Build rows
+  const rows = trips.map((t) => ({
+    tripDate: new Date(t.trip_date),
+    routeName: t.route.route_name,
+    contentType: t.route.content_type,
+    tripsCount: t.trips_count,
+    amount: Number(t.amount),
+  }));
+
+  // 7. Build Excel
+  const buffer = buildBillingDetailExcel({
+    companyName: company.company_name,
+    companyAddress: company.address || '',
+    companyPhone: company.phone ? `Tel：${company.phone}` : '',
+    customerName: customer.customer_name,
+    dateRangeLabel,
+    yearMonthLabel,
+    effectiveDate,
+    rows,
+    subtotal,
+    taxRate,
+    taxAmount,
+    total,
+  });
+
+  const displayName = customer.short_name || customer.customer_name;
+  const filename = `請款明細_${displayName}_${rocYear}年${fromMonth}月.xlsx`;
+
+  return { buffer, filename };
 }

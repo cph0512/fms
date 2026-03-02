@@ -87,6 +87,17 @@ export async function importPreviewHandler(req: Request, res: Response, next: Ne
   }
 }
 
+export async function exportBillingDetailHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { buffer, filename } = await tripsService.exportBillingDetail(req.user!.companyId, req.body);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    res.send(buffer);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function importConfirmHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await tripsService.importConfirm(req.body, req.user!.companyId, req.user!.userId);

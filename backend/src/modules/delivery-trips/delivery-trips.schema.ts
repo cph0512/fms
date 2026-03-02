@@ -73,6 +73,14 @@ export const generateInvoiceSchema = z.object({
   }),
 });
 
+export const exportBillingDetailSchema = z.object({
+  body: z.object({
+    customer_id: z.string().uuid(),
+    from_date: z.string(),
+    to_date: z.string(),
+  }),
+});
+
 export const importConfirmSchema = z.object({
   body: z.object({
     sheets: z.array(

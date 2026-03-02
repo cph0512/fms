@@ -53,6 +53,8 @@ export const deliveryTripsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
+  exportBillingDetail: (data: { customer_id: string; from_date: string; to_date: string }) =>
+    client.post('/delivery-trips/export/billing-detail', data, { responseType: 'blob' }),
   importConfirm: (data: {
     sheets: Array<{
       sheetName: string;

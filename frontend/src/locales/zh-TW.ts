@@ -641,6 +641,9 @@ export default {
     estimatedTax: '預估稅額',
     estimatedTotal: '預估總額',
     includedTrips: '包含運趟',
+    downloadBillingDetail: '下載請款明細',
+    exportSuccess: '請款明細下載成功',
+    exportFailed: '請款明細下載失敗',
   },
 
   // Permission

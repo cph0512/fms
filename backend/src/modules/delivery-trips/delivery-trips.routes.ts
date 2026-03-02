@@ -11,6 +11,7 @@ import {
   confirmTripsSchema,
   voidTripSchema,
   generateInvoiceSchema,
+  exportBillingDetailSchema,
   importConfirmSchema,
 } from './delivery-trips.schema.js';
 import * as tripsController from './delivery-trips.controller.js';
@@ -42,6 +43,7 @@ router.put('/confirm', authenticate, authorize('delivery.write'), validate(confi
 router.put('/:id', authenticate, authorize('delivery.write'), validate(updateTripSchema), tripsController.updateHandler);
 router.put('/:id/void', authenticate, authorize('delivery.write'), validate(voidTripSchema), tripsController.voidHandler);
 router.post('/generate-invoice', authenticate, authorize('delivery.write', 'ar.write'), validate(generateInvoiceSchema), tripsController.generateInvoiceHandler);
+router.post('/export/billing-detail', authenticate, authorize('delivery.read'), validate(exportBillingDetailSchema), tripsController.exportBillingDetailHandler);
 router.post('/import/preview', authenticate, authorize('delivery.write'), upload.single('file'), tripsController.importPreviewHandler);
 router.post('/import/confirm', authenticate, authorize('delivery.write'), validate(importConfirmSchema), tripsController.importConfirmHandler);
 
