@@ -227,7 +227,6 @@ export function ArInvoiceListPage() {
         <Button
           icon={<DownloadOutlined />}
           loading={exporting}
-          disabled={!customerFilter || !dateRange}
           onClick={handleExportBillingDetail}
         >
           {t('delivery.downloadBillingDetail')}
