@@ -46,9 +46,10 @@ export const deliveryTripsApi = {
   confirm: (trip_ids: string[]) => client.put('/delivery-trips/confirm', { trip_ids }),
   void: (id: string) => client.put(`/delivery-trips/${id}/void`, {}),
   generateInvoice: (data: GenerateInvoiceRequest) => client.post('/delivery-trips/generate-invoice', data),
-  importPreview: (file: File) => {
+  importPreview: (file: File, mode: string = 'carrefour') => {
     const fd = new FormData();
     fd.append('file', file);
+    fd.append('mode', mode);
     return client.post('/delivery-trips/import/preview', fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as tripsService from './delivery-trips.service.js';
 import { successResponse } from '../../shared/utils/response.js';
+import { IMPORT_MODES, ImportMode } from './excel-parser.js';
 
 export async function listHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -80,7 +81,11 @@ export async function importPreviewHandler(req: Request, res: Response, next: Ne
       res.status(400).json({ success: false, error: { code: 'NO_FILE', message: 'Excel file is required' } });
       return;
     }
-    const result = await tripsService.importPreview(req.file.buffer, req.user!.companyId);
+    const modeInput = (req.body.mode as string) || 'carrefour';
+    const mode: ImportMode = (IMPORT_MODES as readonly string[]).includes(modeInput)
+      ? (modeInput as ImportMode)
+      : 'carrefour';
+    const result = await tripsService.importPreview(req.file.buffer, req.user!.companyId, mode);
     res.json(successResponse(result));
   } catch (err) {
     next(err);

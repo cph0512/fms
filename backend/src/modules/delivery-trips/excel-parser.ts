@@ -1,5 +1,9 @@
 import * as XLSX from 'xlsx';
 
+// ── Import Mode Registry ──────────────────────────────────────────
+export const IMPORT_MODES = ['carrefour'] as const;
+export type ImportMode = (typeof IMPORT_MODES)[number];
+
 export interface ParsedRow {
   date: string;
   routeName: string;
@@ -49,8 +53,8 @@ function parseDateCell(value: unknown): string | null {
   return null;
 }
 
-export function parseDeliveryExcel(buffer: Buffer): ParsedSheet[] {
-  const workbook = XLSX.read(buffer, { type: 'buffer' });
+// ── Carrefour (家樂福) Parser ─────────────────────────────────────
+function parseCarrefour(workbook: XLSX.WorkBook): ParsedSheet[] {
   const result: ParsedSheet[] = [];
 
   for (const sheetName of workbook.SheetNames) {
@@ -151,4 +155,21 @@ export function parseDeliveryExcel(buffer: Buffer): ParsedSheet[] {
   }
 
   return result;
+}
+
+// ── Main Entry Point ──────────────────────────────────────────────
+/**
+ * Parse a delivery trip Excel file using the specified import mode.
+ * Each mode corresponds to a different Excel format (different customers
+ * may provide data in different layouts).
+ */
+export function parseDeliveryExcel(buffer: Buffer, mode: ImportMode = 'carrefour'): ParsedSheet[] {
+  const workbook = XLSX.read(buffer, { type: 'buffer' });
+
+  switch (mode) {
+    case 'carrefour':
+      return parseCarrefour(workbook);
+    default:
+      throw new Error(`Unknown import mode: ${mode}`);
+  }
 }

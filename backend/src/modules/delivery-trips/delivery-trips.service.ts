@@ -1,7 +1,7 @@
 import { prisma } from '../../config/database.js';
 import { AppError } from '../../shared/errors/AppError.js';
 import { parsePagination, paginationMeta } from '../../shared/utils/pagination.js';
-import { parseDeliveryExcel, ParsedSheet } from './excel-parser.js';
+import { parseDeliveryExcel, ParsedSheet, ImportMode } from './excel-parser.js';
 import { buildBillingDetailExcel } from './billing-export.js';
 
 export async function listTrips(
@@ -410,8 +410,8 @@ export async function generateInvoice(
   return { invoice, tripsCount: confirmedTrips.length, subtotal, tax_amount, total_amount };
 }
 
-export async function importPreview(buffer: Buffer, companyId: string) {
-  const sheets = parseDeliveryExcel(buffer);
+export async function importPreview(buffer: Buffer, companyId: string, mode: ImportMode = 'carrefour') {
+  const sheets = parseDeliveryExcel(buffer, mode);
 
   // Match customers and routes
   const previewSheets = [];

@@ -16,6 +16,7 @@ import {
   Divider,
   Alert,
   Checkbox,
+  Select,
 } from 'antd';
 import {
   InboxOutlined,
@@ -75,8 +76,13 @@ export function TripImportPage() {
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [autoConfirm, setAutoConfirm] = useState(true);
+  const [importMode, setImportMode] = useState('carrefour');
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  const importModeOptions = [
+    { value: 'carrefour', label: t('delivery.importModeCarrefour') },
+  ];
 
   const formatAmount = (val: number | string) =>
     Number(val).toLocaleString('zh-TW');
@@ -84,7 +90,7 @@ export function TripImportPage() {
   const handleUpload = async (file: File) => {
     setUploading(true);
     try {
-      const res = await deliveryTripsApi.importPreview(file);
+      const res = await deliveryTripsApi.importPreview(file, importMode);
       setPreview(res.data.data);
       setCurrentStep(1);
     } catch (err: any) {
@@ -212,6 +218,15 @@ export function TripImportPage() {
       {/* Step 1: Upload */}
       {currentStep === 0 && (
         <Card style={{ maxWidth: 600 }}>
+          <div style={{ marginBottom: 16 }}>
+            <Text strong style={{ marginRight: 8 }}>{t('delivery.importMode')}:</Text>
+            <Select
+              value={importMode}
+              onChange={(v) => setImportMode(v)}
+              options={importModeOptions}
+              style={{ width: 200 }}
+            />
+          </div>
           <Dragger
             accept=".xlsx,.xls"
             showUploadList={false}
