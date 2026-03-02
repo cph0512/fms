@@ -33,3 +33,17 @@ export const updateAccountSchema = z.object({
     id: z.string().uuid(),
   }),
 });
+
+export const importConfirmSchema = z.object({
+  body: z.object({
+    accounts: z.array(
+      z.object({
+        account_code: z.string().min(1).max(20),
+        account_name: z.string().min(1).max(200),
+        account_type: z.enum(['ASSET', 'LIABILITY', 'EQUITY', 'REVENUE', 'EXPENSE']),
+        parent_code: z.string().optional(),
+        description: z.string().optional(),
+      })
+    ).min(1),
+  }),
+});

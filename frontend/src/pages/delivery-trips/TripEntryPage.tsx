@@ -256,7 +256,7 @@ export function TripEntryPage() {
       {!routesLoading &&
         Object.entries(groupedRoutes).map(([contentType, groupRoutes]) => (
           <div key={contentType} style={{ marginBottom: 16 }}>
-            <Divider orientation="left">
+            <Divider titlePlacement="left">
               <Tag color={contentTypeColors[contentType] || 'default'} style={{ fontSize: 14, padding: '2px 12px' }}>
                 {contentType}
               </Tag>

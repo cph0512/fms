@@ -51,6 +51,7 @@ import { TripListPage } from './pages/delivery-trips/TripListPage';
 import { TripEntryPage } from './pages/delivery-trips/TripEntryPage';
 import { TripImportPage } from './pages/delivery-trips/TripImportPage';
 import { TripInvoicePage } from './pages/delivery-trips/TripInvoicePage';
+import { AccountImportPage } from './pages/accounts/AccountImportPage';
 
 const antdLocales: Record<string, typeof zhTW> = {
   'zh-TW': zhTW,
@@ -175,6 +176,14 @@ function App() {
                 element={
                   <PermissionRoute permission="accounting.write">
                     <AccountEditPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="import"
+                element={
+                  <PermissionRoute permission="accounting.write">
+                    <AccountImportPage />
                   </PermissionRoute>
                 }
               />

@@ -51,3 +51,26 @@ export async function updateHandler(req: Request, res: Response, next: NextFunct
     next(err);
   }
 }
+
+export async function importPreviewHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { companyId } = req.user!;
+    if (!req.file) {
+      return res.status(400).json({ error: { message: 'No file uploaded' } });
+    }
+    const result = await accountsService.importPreview(req.file.buffer, companyId);
+    res.json(successResponse(result));
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function importConfirmHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { companyId } = req.user!;
+    const result = await accountsService.importConfirm(req.body, companyId);
+    res.json(successResponse(result));
+  } catch (err) {
+    next(err);
+  }
+}

@@ -88,7 +88,15 @@ export function MainLayout() {
       : []),
     ...(canReadAccounting
       ? [
-          { key: '/accounts', icon: <BookOutlined />, label: t('menu.accounts') },
+          {
+            key: 'accounts-sub',
+            icon: <BookOutlined />,
+            label: t('menu.accounts'),
+            children: [
+              { key: '/accounts', label: t('menu.accountsList') },
+              { key: '/accounts/import', label: t('menu.accountsImport') },
+            ],
+          },
           { key: '/journal/entries', icon: <FormOutlined />, label: t('menu.journal') },
           {
             key: 'gl-sub',
