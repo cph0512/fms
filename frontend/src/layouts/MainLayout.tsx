@@ -20,6 +20,7 @@ import {
   MenuUnfoldOutlined,
   SwapOutlined,
   GlobalOutlined,
+  CarOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../stores/authStore';
@@ -48,6 +49,7 @@ export function MainLayout() {
   const canReadAccounting = usePermission('accounting.read');
   const canReadBank = usePermission('bank.read');
   const canReadBudget = usePermission('budget.read');
+  const canReadDelivery = usePermission('delivery.read');
 
   const handleLogout = async () => {
     await logout();
@@ -104,6 +106,22 @@ export function MainLayout() {
             children: [
               { key: '/reports/balance-sheet', label: t('menu.balanceSheet') },
               { key: '/reports/income-statement', label: t('menu.incomeStatement') },
+            ],
+          },
+        ]
+      : []),
+    ...(canReadDelivery
+      ? [
+          {
+            key: 'delivery-sub',
+            icon: <CarOutlined />,
+            label: t('menu.delivery'),
+            children: [
+              { key: '/delivery-routes', label: t('menu.deliveryRoutes') },
+              { key: '/delivery-trips', label: t('menu.deliveryTrips') },
+              { key: '/delivery-trips/entry', label: t('menu.deliveryEntry') },
+              { key: '/delivery-trips/import', label: t('menu.deliveryImport') },
+              { key: '/delivery-trips/invoice', label: t('menu.deliveryInvoice') },
             ],
           },
         ]

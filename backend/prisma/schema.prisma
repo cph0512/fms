@@ -123,6 +123,8 @@ model Company {
   bank_accounts      BankAccount[]
   journal_entries    JournalEntry[]
   budgets            Budget[]
+  delivery_routes    DeliveryRoute[]
+  delivery_trips     DeliveryTrip[]
 
   @@map("companies")
 }
@@ -162,8 +164,9 @@ model Customer {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  company  Company     @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
-  invoices ArInvoice[]
+  company         Company          @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  invoices        ArInvoice[]
+  delivery_routes DeliveryRoute[]
 
   @@unique([company_id, customer_code])
   @@index([company_id])
@@ -200,9 +203,10 @@ model ArInvoice {
   created_at     DateTime      @default(now())
   updated_at     DateTime      @updatedAt
 
-  customer Customer  @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
-  company  Company   @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
-  payments ArPayment[]
+  customer       Customer       @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  company        Company        @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  payments       ArPayment[]
+  delivery_trips DeliveryTrip[]
 
   @@unique([company_id, invoice_number])
   @@index([company_id, status])
@@ -473,4 +477,63 @@ model BudgetLine {
 
   @@unique([budget_id, account_id])
   @@map("budget_lines")
+}
+
+// ─── M15: Delivery Trips ───────────────────────────────
+
+enum TripStatus {
+  PENDING
+  CONFIRMED
+  BILLED
+  VOID
+}
+
+model DeliveryRoute {
+  route_id        String   @id @default(uuid()) @db.Uuid
+  customer_id     String   @db.Uuid
+  origin          String   @db.VarChar(50)
+  route_name      String   @db.VarChar(200)
+  content_type    String   @db.VarChar(50)
+  standard_price  Decimal  @db.Decimal(15, 2)
+  is_active       Boolean  @default(true)
+  notes           String?  @db.Text
+  company_id      String   @db.Uuid
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  customer Customer      @relation(fields: [customer_id], references: [customer_id], onDelete: Cascade)
+  company  Company        @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  trips    DeliveryTrip[]
+
+  @@unique([company_id, customer_id, route_name, content_type])
+  @@index([company_id, customer_id])
+  @@map("delivery_routes")
+}
+
+model DeliveryTrip {
+  trip_id       String     @id @default(uuid()) @db.Uuid
+  trip_date     DateTime   @db.Date
+  route_id      String     @db.Uuid
+  trips_count   Int        @default(1)
+  unit_price    Decimal    @db.Decimal(15, 2)
+  amount        Decimal    @db.Decimal(15, 2)
+  driver_name   String?    @db.VarChar(100)
+  vehicle_no    String?    @db.VarChar(20)
+  notes         String?    @db.Text
+  status        TripStatus @default(PENDING)
+  invoice_id    String?    @db.Uuid
+  company_id    String     @db.Uuid
+  created_by    String     @db.Uuid
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  route   DeliveryRoute @relation(fields: [route_id], references: [route_id], onDelete: Cascade)
+  invoice ArInvoice?    @relation(fields: [invoice_id], references: [invoice_id])
+  company Company       @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+
+  @@index([company_id, trip_date])
+  @@index([company_id, status])
+  @@index([route_id])
+  @@index([invoice_id])
+  @@map("delivery_trips")
 }

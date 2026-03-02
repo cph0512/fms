@@ -44,6 +44,13 @@ import { IncomeStatementPage } from './pages/reports/IncomeStatementPage';
 import { BudgetListPage } from './pages/budgets/BudgetListPage';
 import { BudgetCreatePage } from './pages/budgets/BudgetCreatePage';
 import { BudgetDetailPage } from './pages/budgets/BudgetDetailPage';
+import { RouteListPage } from './pages/delivery-routes/RouteListPage';
+import { RouteCreatePage } from './pages/delivery-routes/RouteCreatePage';
+import { RouteEditPage } from './pages/delivery-routes/RouteEditPage';
+import { TripListPage } from './pages/delivery-trips/TripListPage';
+import { TripEntryPage } from './pages/delivery-trips/TripEntryPage';
+import { TripImportPage } from './pages/delivery-trips/TripImportPage';
+import { TripInvoicePage } from './pages/delivery-trips/TripInvoicePage';
 
 const antdLocales: Record<string, typeof zhTW> = {
   'zh-TW': zhTW,
@@ -232,6 +239,56 @@ function App() {
                 }
               />
               <Route path=":id" element={<BudgetDetailPage />} />
+            </Route>
+
+            {/* Delivery Routes */}
+            <Route path="/delivery-routes" element={<PermissionRoute permission="delivery.read" />}>
+              <Route index element={<RouteListPage />} />
+              <Route
+                path="create"
+                element={
+                  <PermissionRoute permission="delivery.write">
+                    <RouteCreatePage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path=":id/edit"
+                element={
+                  <PermissionRoute permission="delivery.write">
+                    <RouteEditPage />
+                  </PermissionRoute>
+                }
+              />
+            </Route>
+
+            {/* Delivery Trips */}
+            <Route path="/delivery-trips" element={<PermissionRoute permission="delivery.read" />}>
+              <Route index element={<TripListPage />} />
+              <Route
+                path="entry"
+                element={
+                  <PermissionRoute permission="delivery.write">
+                    <TripEntryPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="import"
+                element={
+                  <PermissionRoute permission="delivery.write">
+                    <TripImportPage />
+                  </PermissionRoute>
+                }
+              />
+              <Route
+                path="invoice"
+                element={
+                  <PermissionRoute permission="delivery.write">
+                    <TripInvoicePage />
+                  </PermissionRoute>
+                }
+              />
             </Route>
 
             {/* Company Management */}

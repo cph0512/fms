@@ -17,6 +17,8 @@ import glRoutes from './modules/gl/gl.routes.js';
 import reportsRoutes from './modules/reports/reports.routes.js';
 import budgetsRoutes from './modules/budgets/budgets.routes.js';
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
+import deliveryRoutesRoutes from './modules/delivery-routes/delivery-routes.routes.js';
+import deliveryTripsRoutes from './modules/delivery-trips/delivery-trips.routes.js';
 import { successResponse } from './shared/utils/response.js';
 
 export const app = express();
@@ -46,6 +48,8 @@ app.use('/api/v1/gl', glRoutes);
 app.use('/api/v1/reports', reportsRoutes);
 app.use('/api/v1/budgets', budgetsRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/delivery-routes', deliveryRoutesRoutes);
+app.use('/api/v1/delivery-trips', deliveryTripsRoutes);
 
 // 404 handler
 app.use((_req, res) => {

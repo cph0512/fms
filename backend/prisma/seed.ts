@@ -20,6 +20,8 @@ const PERMISSIONS = [
   { code: 'bank.write', name: 'Create/Edit Bank Accounts', module: 'bank' },
   { code: 'budget.read', name: 'View Budgets', module: 'budgets' },
   { code: 'budget.write', name: 'Create/Edit Budgets', module: 'budgets' },
+  { code: 'delivery.read', name: 'View Delivery Trips', module: 'delivery' },
+  { code: 'delivery.write', name: 'Create/Edit Delivery Trips', module: 'delivery' },
 ];
 
 const ROLES = [
@@ -40,6 +42,7 @@ const ROLES = [
       'accounting.read', 'accounting.write',
       'bank.read', 'bank.write',
       'budget.read', 'budget.write',
+      'delivery.read', 'delivery.write',
     ],
   },
   {
@@ -53,6 +56,7 @@ const ROLES = [
       'accounting.read', 'accounting.write',
       'bank.read', 'bank.write',
       'budget.read', 'budget.write',
+      'delivery.read', 'delivery.write',
     ],
   },
   {
@@ -68,7 +72,12 @@ const ROLES = [
   {
     name: 'Viewer',
     description: 'Read-only access',
-    permissions: ['customer.read', 'ar.read', 'vendor.read', 'ap.read', 'accounting.read', 'bank.read', 'budget.read'],
+    permissions: ['customer.read', 'ar.read', 'vendor.read', 'ap.read', 'accounting.read', 'bank.read', 'budget.read', 'delivery.read'],
+  },
+  {
+    name: 'Driver',
+    description: 'Delivery driver - trip entry only',
+    permissions: ['delivery.read', 'delivery.write'],
   },
 ];
 
