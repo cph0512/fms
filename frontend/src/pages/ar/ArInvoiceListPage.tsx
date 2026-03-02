@@ -51,6 +51,7 @@ export function ArInvoiceListPage() {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
   const [customers, setCustomers] = useState<CustomerOption[]>([]);
   const [exporting, setExporting] = useState(false);
+  const [exportingInvoiceId, setExportingInvoiceId] = useState<string | null>(null);
   const navigate = useNavigate();
   const canWrite = usePermission('ar.write');
   const { t } = useTranslation();
@@ -120,6 +121,19 @@ export function ArInvoiceListPage() {
     }
   };
 
+  const handleExportByInvoice = async (invoiceId: string) => {
+    setExportingInvoiceId(invoiceId);
+    try {
+      const res = await deliveryTripsApi.exportBillingDetailByInvoice(invoiceId);
+      downloadFromResponse(res, '請款明細.xlsx');
+      message.success(t('delivery.exportSuccess'));
+    } catch (err: any) {
+      message.error(err.response?.data?.error?.message || t('delivery.exportFailed'));
+    } finally {
+      setExportingInvoiceId(null);
+    }
+  };
+
   const formatAmount = (val: string | number) =>
     Number(val).toLocaleString('zh-TW', { minimumFractionDigits: 0 });
 
@@ -176,9 +190,17 @@ export function ArInvoiceListPage() {
       title: t('common.actions'),
       key: 'actions',
       render: (_: unknown, record: Invoice) => (
-        <Button type="link" onClick={() => navigate(`/ar/invoices/${record.invoice_id}`)}>
-          {t('ar.invoiceDetail')}
-        </Button>
+        <Space size="small">
+          <Button type="link" onClick={() => navigate(`/ar/invoices/${record.invoice_id}`)}>
+            {t('ar.invoiceDetail')}
+          </Button>
+          <Button
+            type="link"
+            icon={<DownloadOutlined />}
+            loading={exportingInvoiceId === record.invoice_id}
+            onClick={() => handleExportByInvoice(record.invoice_id)}
+          />
+        </Space>
       ),
     },
   ];

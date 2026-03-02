@@ -689,3 +689,92 @@ export async function exportBillingDetail(
 
   return { buffer, filename };
 }
+
+export async function exportBillingDetailByInvoice(
+  companyId: string,
+  invoiceId: string
+): Promise<{ buffer: Buffer; filename: string }> {
+  // 1. Fetch invoice to get customer_id
+  const invoice = await prisma.arInvoice.findFirst({
+    where: { invoice_id: invoiceId, company_id: companyId },
+    select: { invoice_id: true, customer_id: true, invoice_number: true },
+  });
+  if (!invoice) throw new AppError(404, 'NOT_FOUND', 'Invoice not found');
+
+  // 2. Fetch trips linked to this invoice
+  const trips = await prisma.deliveryTrip.findMany({
+    where: { invoice_id: invoiceId, company_id: companyId },
+    include: {
+      route: { select: { route_name: true, content_type: true } },
+    },
+    orderBy: { trip_date: 'asc' },
+  });
+
+  if (trips.length === 0) {
+    throw new AppError(400, 'NO_TRIPS', 'This invoice has no linked delivery trips');
+  }
+
+  // 3. Fetch company and customer
+  const company = await prisma.company.findUnique({
+    where: { company_id: companyId },
+    select: { company_name: true, address: true, phone: true, tax_rate: true },
+  });
+  if (!company) throw new AppError(404, 'NOT_FOUND', 'Company not found');
+
+  const customer = await prisma.customer.findFirst({
+    where: { customer_id: invoice.customer_id, company_id: companyId },
+    select: { customer_name: true, short_name: true },
+  });
+  if (!customer) throw new AppError(404, 'NOT_FOUND', 'Customer not found');
+
+  // 4. Derive date range from trips
+  const tripDates = trips.map((t) => new Date(t.trip_date));
+  const minDate = tripDates.reduce((a, b) => (a < b ? a : b));
+  const maxDate = tripDates.reduce((a, b) => (a > b ? a : b));
+
+  // 5. Calculate totals
+  const subtotal = trips.reduce((sum, t) => sum + Number(t.amount), 0);
+  const taxRate = Number(company.tax_rate);
+  const taxAmount = Math.round(subtotal * taxRate / 100);
+  const total = subtotal + taxAmount;
+
+  // 6. Build labels
+  const fromMonth = minDate.getMonth() + 1;
+  const fromDay = minDate.getDate();
+  const toMonth = maxDate.getMonth() + 1;
+  const toDay = maxDate.getDate();
+  const dateRangeLabel = `${fromMonth}/${fromDay}-${toMonth}/${toDay}`;
+  const rocYear = minDate.getFullYear() - 1911;
+  const yearMonthLabel = `${rocYear}年${fromMonth}月份報價帳單`;
+  const effectiveDate = `${rocYear}/${fromMonth}`;
+
+  // 7. Build rows
+  const rows = trips.map((t) => ({
+    tripDate: new Date(t.trip_date),
+    routeName: t.route.route_name,
+    contentType: t.route.content_type,
+    tripsCount: t.trips_count,
+    amount: Number(t.amount),
+  }));
+
+  // 8. Build Excel
+  const buffer = buildBillingDetailExcel({
+    companyName: company.company_name,
+    companyAddress: company.address || '',
+    companyPhone: company.phone ? `Tel：${company.phone}` : '',
+    customerName: customer.customer_name,
+    dateRangeLabel,
+    yearMonthLabel,
+    effectiveDate,
+    rows,
+    subtotal,
+    taxRate,
+    taxAmount,
+    total,
+  });
+
+  const displayName = customer.short_name || customer.customer_name;
+  const filename = `請款明細_${displayName}_${rocYear}年${fromMonth}月.xlsx`;
+
+  return { buffer, filename };
+}

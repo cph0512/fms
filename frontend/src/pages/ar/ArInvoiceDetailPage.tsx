@@ -4,8 +4,11 @@ import {
   Card, Descriptions, Tag, Table, Button, Typography, message, Space, Spin, Modal, Form,
   InputNumber, DatePicker, Select, Input, Popconfirm,
 } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { arApi } from '../../api/ar.api';
+import { deliveryTripsApi } from '../../api/delivery-trips.api';
+import { downloadFromResponse } from '../../utils/download';
 import { usePermission } from '../../hooks/usePermission';
 import dayjs from 'dayjs';
 
@@ -61,6 +64,7 @@ export function ArInvoiceDetailPage() {
   const [loading, setLoading] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [paymentForm] = Form.useForm();
   const navigate = useNavigate();
   const canWrite = usePermission('ar.write');
@@ -126,6 +130,20 @@ export function ArInvoiceDetailPage() {
     }
   };
 
+  const handleExportBillingDetail = async () => {
+    if (!invoice) return;
+    setExporting(true);
+    try {
+      const res = await deliveryTripsApi.exportBillingDetailByInvoice(invoice.invoice_id);
+      downloadFromResponse(res, '請款明細.xlsx');
+      message.success(t('delivery.exportSuccess'));
+    } catch (err: any) {
+      message.error(err.response?.data?.error?.message || t('delivery.exportFailed'));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) return <Spin size="large" />;
   if (!invoice) return null;
 
@@ -162,6 +180,13 @@ export function ArInvoiceDetailPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <Title level={3} style={{ margin: 0 }}>{invoice.invoice_number}</Title>
         <Space>
+          <Button
+            icon={<DownloadOutlined />}
+            loading={exporting}
+            onClick={handleExportBillingDetail}
+          >
+            {t('delivery.downloadBillingDetail')}
+          </Button>
           {canAddPayment && (
             <Button type="primary" onClick={() => setPaymentModalOpen(true)}>
               {t('ar.addPayment')}

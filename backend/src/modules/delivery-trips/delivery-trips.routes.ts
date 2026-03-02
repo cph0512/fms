@@ -44,6 +44,7 @@ router.put('/:id', authenticate, authorize('delivery.write'), validate(updateTri
 router.put('/:id/void', authenticate, authorize('delivery.write'), validate(voidTripSchema), tripsController.voidHandler);
 router.post('/generate-invoice', authenticate, authorize('delivery.write', 'ar.write'), validate(generateInvoiceSchema), tripsController.generateInvoiceHandler);
 router.post('/export/billing-detail', authenticate, authorize('delivery.read'), validate(exportBillingDetailSchema), tripsController.exportBillingDetailHandler);
+router.get('/export/billing-detail/invoice/:invoiceId', authenticate, authorize('delivery.read'), tripsController.exportBillingDetailByInvoiceHandler);
 router.post('/import/preview', authenticate, authorize('delivery.write'), upload.single('file'), tripsController.importPreviewHandler);
 router.post('/import/confirm', authenticate, authorize('delivery.write'), validate(importConfirmSchema), tripsController.importConfirmHandler);
 

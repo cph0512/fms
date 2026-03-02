@@ -55,6 +55,8 @@ export const deliveryTripsApi = {
   },
   exportBillingDetail: (data: { customer_id: string; from_date: string; to_date: string }) =>
     client.post('/delivery-trips/export/billing-detail', data, { responseType: 'blob' }),
+  exportBillingDetailByInvoice: (invoiceId: string) =>
+    client.get(`/delivery-trips/export/billing-detail/invoice/${invoiceId}`, { responseType: 'blob' }),
   importConfirm: (data: {
     sheets: Array<{
       sheetName: string;

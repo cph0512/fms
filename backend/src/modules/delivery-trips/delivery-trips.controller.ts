@@ -98,6 +98,17 @@ export async function exportBillingDetailHandler(req: Request, res: Response, ne
   }
 }
 
+export async function exportBillingDetailByInvoiceHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { buffer, filename } = await tripsService.exportBillingDetailByInvoice(req.user!.companyId, req.params.invoiceId as string);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
+    res.send(buffer);
+  } catch (err) {
+    next(err);
+  }
+}
+
 export async function importConfirmHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const result = await tripsService.importConfirm(req.body, req.user!.companyId, req.user!.userId);
