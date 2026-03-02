@@ -120,6 +120,27 @@ export function TripListPage() {
     }
   };
 
+  const handleConfirmAll = async () => {
+    // Confirm all PENDING trips currently visible (fetch all pending trip_ids)
+    const pendingTrips = trips.filter((t) => t.status === 'PENDING');
+    if (pendingTrips.length === 0) {
+      message.warning(t('delivery.noPendingTrips'));
+      return;
+    }
+    const ids = pendingTrips.map((t) => t.trip_id);
+    setConfirmLoading(true);
+    try {
+      await deliveryTripsApi.confirm(ids);
+      message.success(t('delivery.confirmSuccess', { count: ids.length }));
+      setSelectedRowKeys([]);
+      fetchTrips(pagination.current, pagination.pageSize);
+    } catch (err: any) {
+      message.error(err.response?.data?.error?.message || t('delivery.confirmFailed'));
+    } finally {
+      setConfirmLoading(false);
+    }
+  };
+
   const formatAmount = (val: string | number) =>
     Number(val).toLocaleString('zh-TW');
 
@@ -276,18 +297,31 @@ export function TripListPage() {
         />
         <Button onClick={() => fetchTrips(1)}>{t('common.search')}</Button>
       </Space>
-      {canWrite && selectedRowKeys.length > 0 && (
+      {canWrite && (
         <div style={{ marginBottom: 16 }}>
-          <Space>
-            <span>{t('delivery.selectedCount', { count: selectedRowKeys.length })}</span>
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              loading={confirmLoading}
-              onClick={handleConfirmSelected}
-            >
-              {t('delivery.confirmSelected')}
-            </Button>
+          <Space wrap>
+            {selectedRowKeys.length > 0 && (
+              <>
+                <span>{t('delivery.selectedCount', { count: selectedRowKeys.length })}</span>
+                <Button
+                  type="primary"
+                  icon={<CheckOutlined />}
+                  loading={confirmLoading}
+                  onClick={handleConfirmSelected}
+                >
+                  {t('delivery.confirmSelected')}
+                </Button>
+              </>
+            )}
+            {trips.some((t) => t.status === 'PENDING') && (
+              <Button
+                icon={<CheckOutlined />}
+                loading={confirmLoading}
+                onClick={handleConfirmAll}
+              >
+                {t('delivery.confirmAllPending')}
+              </Button>
+            )}
           </Space>
         </div>
       )}

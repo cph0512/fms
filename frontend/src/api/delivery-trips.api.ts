@@ -69,5 +69,6 @@ export const deliveryTripsApi = {
     trip_date_fallback?: string;
     driver_name?: string;
     vehicle_no?: string;
+    auto_confirm?: boolean;
   }) => client.post('/delivery-trips/import/confirm', data),
 };

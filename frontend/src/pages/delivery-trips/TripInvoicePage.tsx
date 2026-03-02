@@ -22,6 +22,7 @@ import { FileTextOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { deliveryTripsApi } from '../../api/delivery-trips.api';
 import { customersApi } from '../../api/customers.api';
+import { useAuthStore } from '../../stores/authStore';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -64,6 +65,8 @@ export function TripInvoicePage() {
 
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const currentCompany = useAuthStore((s) => s.currentCompany);
+  const companyTaxRate = (currentCompany?.tax_rate ?? 5) / 100; // e.g. 5 => 0.05
 
   useEffect(() => {
     customersApi
@@ -103,7 +106,7 @@ export function TripInvoicePage() {
     Number(val).toLocaleString('zh-TW');
 
   const subtotal = trips.reduce((sum, t) => sum + Number(t.amount), 0);
-  const taxAmount = Math.round(subtotal * 0.05);
+  const taxAmount = Math.round(subtotal * companyTaxRate);
   const totalAmount = subtotal + taxAmount;
 
   const handleGenerate = async () => {
@@ -125,7 +128,7 @@ export function TripInvoicePage() {
         notes: notes || undefined,
       });
       message.success(t('delivery.invoiceGenerated'));
-      const invoiceId = res.data.data?.invoice_id;
+      const invoiceId = res.data.data?.invoice?.invoice_id;
       if (invoiceId) {
         navigate(`/ar/invoices/${invoiceId}`);
       } else {
@@ -281,7 +284,7 @@ export function TripInvoicePage() {
                   title={t('delivery.estimatedTax')}
                   value={formatAmount(taxAmount)}
                   prefix="$"
-                  suffix="(5%)"
+                  suffix={`(${currentCompany?.tax_rate ?? 5}%)`}
                 />
               </Col>
               <Col xs={12} sm={6}>

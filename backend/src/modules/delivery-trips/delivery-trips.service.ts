@@ -519,6 +519,7 @@ export async function importConfirm(
     trip_date_fallback?: string;
     driver_name?: string;
     vehicle_no?: string;
+    auto_confirm?: boolean;
   },
   companyId: string,
   userId: string
@@ -586,6 +587,7 @@ export async function importConfirm(
           amount,
           driver_name: data.driver_name,
           vehicle_no: data.vehicle_no,
+          status: data.auto_confirm ? 'CONFIRMED' : 'PENDING',
           company_id: companyId,
           created_by: userId,
         },

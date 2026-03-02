@@ -94,5 +94,6 @@ export const importConfirmSchema = z.object({
     trip_date_fallback: z.string().optional(),
     driver_name: z.string().optional(),
     vehicle_no: z.string().optional(),
+    auto_confirm: z.boolean().optional(),
   }),
 });

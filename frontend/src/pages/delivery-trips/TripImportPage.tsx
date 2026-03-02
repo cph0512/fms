@@ -15,8 +15,15 @@ import {
   Col,
   Divider,
   Alert,
+  Checkbox,
 } from 'antd';
-import { InboxOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import {
+  InboxOutlined,
+  CheckCircleOutlined,
+  FileTextOutlined,
+  UnorderedListOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { deliveryTripsApi } from '../../api/delivery-trips.api';
 
@@ -67,6 +74,7 @@ export function TripImportPage() {
   const [confirming, setConfirming] = useState(false);
   const [preview, setPreview] = useState<PreviewResult | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [autoConfirm, setAutoConfirm] = useState(true);
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -91,7 +99,6 @@ export function TripImportPage() {
     if (!preview) return;
     setConfirming(true);
     try {
-      // Send the actual parsed data back to the backend
       const confirmData = {
         sheets: preview.sheets.map((s) => ({
           sheetName: s.sheet_name,
@@ -105,6 +112,7 @@ export function TripImportPage() {
             amount: r.amount,
           })),
         })),
+        auto_confirm: autoConfirm,
       };
       const res = await deliveryTripsApi.importConfirm(confirmData);
       setResult(res.data.data);
@@ -289,6 +297,19 @@ export function TripImportPage() {
             </Card>
           )}
 
+          <Card style={{ marginBottom: 16 }}>
+            <Checkbox
+              checked={autoConfirm}
+              onChange={(e) => setAutoConfirm(e.target.checked)}
+            >
+              <Text strong>{t('delivery.autoConfirmImport')}</Text>
+            </Checkbox>
+            <br />
+            <Text type="secondary" style={{ marginLeft: 24 }}>
+              {t('delivery.autoConfirmHint')}
+            </Text>
+          </Card>
+
           <Divider />
           <Space>
             <Button
@@ -331,12 +352,53 @@ export function TripImportPage() {
                 </Col>
               )}
             </Row>
+
+            {/* Next step guidance */}
+            <Alert
+              type="info"
+              showIcon
+              style={{ marginTop: 24, textAlign: 'left', maxWidth: 500, margin: '24px auto 0' }}
+              message={t('delivery.importNextStepTitle')}
+              description={
+                autoConfirm
+                  ? t('delivery.importNextStepAutoConfirmed')
+                  : t('delivery.importNextStepPending')
+              }
+            />
+
             <Divider />
-            <Space>
-              <Button type="primary" onClick={() => navigate('/delivery-trips')}>
+            <Space size="middle" wrap>
+              {autoConfirm ? (
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={<FileTextOutlined />}
+                  onClick={() => navigate('/delivery-trips/invoice')}
+                >
+                  {t('delivery.goGenerateInvoice')}
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={<CheckCircleOutlined />}
+                  onClick={() => navigate('/delivery-trips')}
+                >
+                  {t('delivery.goConfirmTrips')}
+                </Button>
+              )}
+              <Button
+                size="large"
+                icon={<UnorderedListOutlined />}
+                onClick={() => navigate('/delivery-trips')}
+              >
                 {t('delivery.viewTrips')}
               </Button>
-              <Button onClick={() => { setCurrentStep(0); setPreview(null); setResult(null); }}>
+              <Button
+                size="large"
+                icon={<UploadOutlined />}
+                onClick={() => { setCurrentStep(0); setPreview(null); setResult(null); setAutoConfirm(true); }}
+              >
                 {t('delivery.importAnother')}
               </Button>
             </Space>
