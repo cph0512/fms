@@ -228,6 +228,7 @@ export default {
     paymentSuccess: 'Payment added successfully',
     paymentFailed: 'Failed to add payment',
     noPayments: 'No payments yet',
+    exportNeedCustomerAndDate: 'Please select a customer and date range first',
   },
 
   // Vendors

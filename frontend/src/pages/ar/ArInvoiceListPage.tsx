@@ -1,14 +1,23 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Table, Button, Tag, Select, Space, Typography, message, DatePicker } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, DownloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { arApi } from '../../api/ar.api';
+import { customersApi } from '../../api/customers.api';
+import { deliveryTripsApi } from '../../api/delivery-trips.api';
+import { downloadFromResponse } from '../../utils/download';
 import { usePermission } from '../../hooks/usePermission';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
+
+interface CustomerOption {
+  customer_id: string;
+  customer_code: string;
+  customer_name: string;
+}
 
 interface Invoice {
   invoice_id: string;
@@ -37,8 +46,11 @@ export function ArInvoiceListPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string | undefined>();
+  const [customerFilter, setCustomerFilter] = useState<string | undefined>();
   const [dateRange, setDateRange] = useState<[dayjs.Dayjs, dayjs.Dayjs] | null>(null);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
+  const [customers, setCustomers] = useState<CustomerOption[]>([]);
+  const [exporting, setExporting] = useState(false);
   const navigate = useNavigate();
   const canWrite = usePermission('ar.write');
   const { t } = useTranslation();
@@ -57,6 +69,7 @@ export function ArInvoiceListPage() {
     try {
       const params: any = { page, limit: pageSize };
       if (statusFilter) params.status = statusFilter;
+      if (customerFilter) params.customer_id = customerFilter;
       if (dateRange) {
         params.from_date = dateRange[0].format('YYYY-MM-DD');
         params.to_date = dateRange[1].format('YYYY-MM-DD');
@@ -78,6 +91,34 @@ export function ArInvoiceListPage() {
   useEffect(() => {
     fetchInvoices();
   }, []);
+
+  useEffect(() => {
+    customersApi
+      .list({ limit: 200, status: 'ACTIVE' })
+      .then((res) => setCustomers(res.data.data))
+      .catch(() => {});
+  }, []);
+
+  const handleExportBillingDetail = async () => {
+    if (!customerFilter || !dateRange) {
+      message.warning(t('ar.exportNeedCustomerAndDate'));
+      return;
+    }
+    setExporting(true);
+    try {
+      const res = await deliveryTripsApi.exportBillingDetail({
+        customer_id: customerFilter,
+        from_date: dateRange[0].format('YYYY-MM-DD'),
+        to_date: dateRange[1].format('YYYY-MM-DD'),
+      });
+      downloadFromResponse(res, '請款明細.xlsx');
+      message.success(t('delivery.exportSuccess'));
+    } catch (err: any) {
+      message.error(err.response?.data?.error?.message || t('delivery.exportFailed'));
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const formatAmount = (val: string | number) =>
     Number(val).toLocaleString('zh-TW', { minimumFractionDigits: 0 });
@@ -154,6 +195,19 @@ export function ArInvoiceListPage() {
       </div>
       <Space style={{ marginBottom: 16 }} wrap>
         <Select
+          showSearch
+          placeholder={t('ar.selectCustomer')}
+          allowClear
+          optionFilterProp="label"
+          style={{ width: 220 }}
+          value={customerFilter}
+          onChange={(v) => setCustomerFilter(v)}
+          options={customers.map((c) => ({
+            value: c.customer_id,
+            label: `${c.customer_code} - ${c.customer_name}`,
+          }))}
+        />
+        <Select
           placeholder={t('ar.statusFilter')}
           allowClear
           style={{ width: 180 }}
@@ -170,6 +224,14 @@ export function ArInvoiceListPage() {
         />
         <RangePicker onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)} />
         <Button onClick={() => fetchInvoices(1)}>{t('common.search')}</Button>
+        <Button
+          icon={<DownloadOutlined />}
+          loading={exporting}
+          disabled={!customerFilter || !dateRange}
+          onClick={handleExportBillingDetail}
+        >
+          {t('delivery.downloadBillingDetail')}
+        </Button>
       </Space>
       <Table
         columns={columns}

@@ -228,6 +228,7 @@ export default {
     paymentSuccess: '收款記錄新增成功',
     paymentFailed: '收款記錄新增失敗',
     noPayments: '尚無收款記錄',
+    exportNeedCustomerAndDate: '請先選擇客戶和日期範圍',
   },
 
   // Vendors
