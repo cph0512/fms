@@ -53,5 +53,21 @@ export const deliveryTripsApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
-  importConfirm: (data: { import_id: string }) => client.post('/delivery-trips/import/confirm', data),
+  importConfirm: (data: {
+    sheets: Array<{
+      sheetName: string;
+      customerName: string;
+      customerId?: string;
+      rows: Array<{
+        date: string;
+        routeName: string;
+        contentType: string;
+        tripsCount: number;
+        amount: number;
+      }>;
+    }>;
+    trip_date_fallback?: string;
+    driver_name?: string;
+    vehicle_no?: string;
+  }) => client.post('/delivery-trips/import/confirm', data),
 };

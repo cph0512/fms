@@ -414,10 +414,13 @@ export async function importPreview(buffer: Buffer, companyId: string) {
 
   // Match customers and routes
   const previewSheets = [];
+  const newRoutesMap = new Map<string, { route_name: string; content_type: string; customer_name: string; standard_price: number }>();
+  let totalTrips = 0;
+  let totalAmount = 0;
 
   for (const sheet of sheets) {
     // Try to find matching customer by name
-    let matchedCustomer = null;
+    let matchedCustomer: { customer_id: string; customer_code: string; customer_name: string } | null = null;
     if (sheet.customerName) {
       matchedCustomer = await prisma.customer.findFirst({
         where: {
@@ -431,8 +434,11 @@ export async function importPreview(buffer: Buffer, companyId: string) {
       });
     }
 
-    // Try to match routes
+    // Try to match routes + collect new routes
     const rowsWithMatch = [];
+    let sheetTripCount = 0;
+    let sheetTotalAmount = 0;
+
     for (const row of sheet.rows) {
       let matchedRoute = null;
       if (matchedCustomer && row.routeName) {
@@ -447,25 +453,53 @@ export async function importPreview(buffer: Buffer, companyId: string) {
         });
       }
 
+      if (!matchedRoute && row.routeName) {
+        const key = `${sheet.customerName}|${row.routeName}|${row.contentType}`;
+        if (!newRoutesMap.has(key)) {
+          const unitPrice = row.tripsCount > 0 ? row.amount / row.tripsCount : row.amount;
+          newRoutesMap.set(key, {
+            route_name: row.routeName,
+            content_type: row.contentType || 'general',
+            customer_name: sheet.customerName,
+            standard_price: unitPrice,
+          });
+        }
+      }
+
+      sheetTripCount += row.tripsCount;
+      sheetTotalAmount += row.amount;
+
       rowsWithMatch.push({
         ...row,
-        matchedRoute,
+        matched_route_id: matchedRoute?.route_id || null,
       });
     }
 
+    totalTrips += sheetTripCount;
+    totalAmount += sheetTotalAmount;
+
+    // Parse date range
+    const dates = sheet.rows.map((r) => r.date).filter(Boolean);
+    const dateFrom = dates.length > 0 ? dates[0] : '';
+    const dateTo = dates.length > 0 ? dates[dates.length - 1] : '';
+
     previewSheets.push({
-      sheetName: sheet.sheetName,
-      customerName: sheet.customerName,
-      dateRange: sheet.dateRange,
-      matchedCustomer,
-      totalRows: sheet.rows.length,
-      matchedRoutes: rowsWithMatch.filter((r) => r.matchedRoute).length,
-      unmatchedRoutes: rowsWithMatch.filter((r) => !r.matchedRoute).length,
+      sheet_name: sheet.sheetName,
+      customer_name: sheet.customerName,
+      customer_id: matchedCustomer?.customer_id || null,
+      date_range: { from: dateFrom, to: dateTo },
+      trip_count: sheetTripCount,
+      total_amount: sheetTotalAmount,
       rows: rowsWithMatch,
     });
   }
 
-  return { sheets: previewSheets };
+  return {
+    sheets: previewSheets,
+    new_routes: Array.from(newRoutesMap.values()),
+    total_trips: totalTrips,
+    total_amount: totalAmount,
+  };
 }
 
 export async function importConfirm(

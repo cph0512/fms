@@ -14,6 +14,7 @@ import {
   Row,
   Col,
   Divider,
+  Alert,
 } from 'antd';
 import { InboxOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -22,12 +23,23 @@ import { deliveryTripsApi } from '../../api/delivery-trips.api';
 const { Title, Text } = Typography;
 const { Dragger } = Upload;
 
+interface ParsedRow {
+  date: string;
+  routeName: string;
+  contentType: string;
+  tripsCount: number;
+  amount: number;
+  matched_route_id: string | null;
+}
+
 interface SheetPreview {
   sheet_name: string;
   customer_name: string;
+  customer_id: string | null;
   date_range: { from: string; to: string };
   trip_count: number;
   total_amount: number;
+  rows: ParsedRow[];
 }
 
 interface NewRoute {
@@ -38,7 +50,6 @@ interface NewRoute {
 }
 
 interface PreviewResult {
-  import_id: string;
   sheets: SheetPreview[];
   new_routes: NewRoute[];
   total_trips: number;
@@ -46,9 +57,8 @@ interface PreviewResult {
 }
 
 interface ImportResult {
-  success_count: number;
-  total_amount: number;
-  new_routes_created: number;
+  routesCreated: number;
+  tripsCreated: number;
 }
 
 export function TripImportPage() {
@@ -70,20 +80,36 @@ export function TripImportPage() {
       setPreview(res.data.data);
       setCurrentStep(1);
     } catch (err: any) {
-      message.error(err.response?.data?.error?.message || t('delivery.importPreviewFailed'));
+      message.error(err.response?.data?.error?.message || t('delivery.importFailed'));
     } finally {
       setUploading(false);
     }
-    return false; // prevent auto upload
+    return false;
   };
 
   const handleConfirmImport = async () => {
     if (!preview) return;
     setConfirming(true);
     try {
-      const res = await deliveryTripsApi.importConfirm({ import_id: preview.import_id });
+      // Send the actual parsed data back to the backend
+      const confirmData = {
+        sheets: preview.sheets.map((s) => ({
+          sheetName: s.sheet_name,
+          customerName: s.customer_name,
+          customerId: s.customer_id || undefined,
+          rows: s.rows.map((r) => ({
+            date: r.date,
+            routeName: r.routeName,
+            contentType: r.contentType,
+            tripsCount: r.tripsCount,
+            amount: r.amount,
+          })),
+        })),
+      };
+      const res = await deliveryTripsApi.importConfirm(confirmData);
       setResult(res.data.data);
       setCurrentStep(2);
+      message.success(t('delivery.importSuccess'));
     } catch (err: any) {
       message.error(err.response?.data?.error?.message || t('delivery.importFailed'));
     } finally {
@@ -93,7 +119,7 @@ export function TripImportPage() {
 
   const sheetColumns = [
     {
-      title: t('delivery.sheetName'),
+      title: t('delivery.importSheetName'),
       dataIndex: 'sheet_name',
       key: 'sheet_name',
     },
@@ -101,15 +127,25 @@ export function TripImportPage() {
       title: t('delivery.customer'),
       dataIndex: 'customer_name',
       key: 'customer_name',
+      render: (name: string, record: SheetPreview) => (
+        <span>
+          {name}
+          {record.customer_id ? (
+            <Tag color="green" style={{ marginLeft: 8 }}>{t('delivery.importMatched')}</Tag>
+          ) : (
+            <Tag color="orange" style={{ marginLeft: 8 }}>{t('delivery.importUnmatched')}</Tag>
+          )}
+        </span>
+      ),
     },
     {
       title: t('delivery.dateRange'),
       key: 'date_range',
       render: (_: unknown, record: SheetPreview) =>
-        `${record.date_range.from} ~ ${record.date_range.to}`,
+        record.date_range.from ? `${record.date_range.from} ~ ${record.date_range.to}` : '-',
     },
     {
-      title: t('delivery.tripCount'),
+      title: t('delivery.tripsCount'),
       dataIndex: 'trip_count',
       key: 'trip_count',
       align: 'center' as const,
@@ -149,17 +185,19 @@ export function TripImportPage() {
     },
   ];
 
+  const unmatchedSheets = preview?.sheets.filter((s) => !s.customer_id) || [];
+
   return (
     <div>
-      <Title level={3}>{t('delivery.importTrips')}</Title>
+      <Title level={3}>{t('delivery.importTitle')}</Title>
 
       <Steps
         current={currentStep}
         style={{ marginBottom: 24, maxWidth: 600 }}
         items={[
-          { title: t('delivery.importStep1') },
-          { title: t('delivery.importStep2') },
-          { title: t('delivery.importStep3') },
+          { title: t('delivery.uploadExcel') },
+          { title: t('delivery.parsePreview') },
+          { title: t('delivery.importResult') },
         ]}
       />
 
@@ -178,12 +216,12 @@ export function TripImportPage() {
             <p className="ant-upload-drag-icon">
               <InboxOutlined />
             </p>
-            <p className="ant-upload-text">{t('delivery.uploadDragText')}</p>
-            <p className="ant-upload-hint">{t('delivery.uploadHintText')}</p>
+            <p className="ant-upload-text">{t('delivery.uploadExcel')}</p>
+            <p className="ant-upload-hint">{t('delivery.uploadHint')}</p>
           </Dragger>
           {uploading && (
             <div style={{ textAlign: 'center', marginTop: 16 }}>
-              <Text type="secondary">{t('delivery.uploadingAndParsing')}</Text>
+              <Text type="secondary">{t('common.loading')}</Text>
             </div>
           )}
         </Card>
@@ -196,21 +234,19 @@ export function TripImportPage() {
             <Row gutter={24}>
               <Col xs={12} sm={8}>
                 <Statistic
-                  title={t('delivery.sheetCount')}
+                  title={t('delivery.sheetsFound')}
                   value={preview.sheets.length}
-                  suffix={t('delivery.sheetUnit')}
                 />
               </Col>
               <Col xs={12} sm={8}>
                 <Statistic
-                  title={t('delivery.totalTrips')}
+                  title={t('delivery.tripsFound')}
                   value={preview.total_trips}
-                  suffix={t('delivery.tripUnit')}
                 />
               </Col>
               <Col xs={24} sm={8}>
                 <Statistic
-                  title={t('delivery.totalAmount')}
+                  title={t('delivery.importTotalAmount')}
                   value={formatAmount(preview.total_amount)}
                   prefix="$"
                 />
@@ -218,7 +254,17 @@ export function TripImportPage() {
             </Row>
           </Card>
 
-          <Card title={t('delivery.sheetSummary')} style={{ marginBottom: 16 }}>
+          {unmatchedSheets.length > 0 && (
+            <Alert
+              type="warning"
+              showIcon
+              style={{ marginBottom: 16 }}
+              message={t('delivery.importUnmatchedWarning', { count: unmatchedSheets.length })}
+              description={unmatchedSheets.map((s) => s.customer_name).join(', ')}
+            />
+          )}
+
+          <Card title={t('delivery.importSheetSummary')} style={{ marginBottom: 16 }}>
             <Table
               columns={sheetColumns}
               dataSource={preview.sheets}
@@ -229,14 +275,14 @@ export function TripImportPage() {
           </Card>
 
           {preview.new_routes.length > 0 && (
-            <Card title={t('delivery.newRoutesToCreate')} style={{ marginBottom: 16 }}>
+            <Card title={t('delivery.newRoutes')} style={{ marginBottom: 16 }}>
               <Text type="warning" style={{ display: 'block', marginBottom: 12 }}>
-                {t('delivery.newRoutesNotice', { count: preview.new_routes.length })}
+                {t('delivery.importNewRoutesNotice', { count: preview.new_routes.length })}
               </Text>
               <Table
                 columns={newRouteColumns}
                 dataSource={preview.new_routes}
-                rowKey="route_name"
+                rowKey={(r) => `${r.route_name}-${r.content_type}`}
                 pagination={false}
                 size="small"
               />
@@ -254,7 +300,7 @@ export function TripImportPage() {
               {t('delivery.confirmImport')}
             </Button>
             <Button size="large" onClick={() => { setCurrentStep(0); setPreview(null); }}>
-              {t('delivery.reUpload')}
+              {t('delivery.importReUpload')}
             </Button>
             <Button size="large" onClick={() => navigate('/delivery-trips')}>
               {t('common.cancel')}
@@ -268,28 +314,19 @@ export function TripImportPage() {
         <Card>
           <div style={{ textAlign: 'center', padding: '24px 0' }}>
             <CheckCircleOutlined style={{ fontSize: 48, color: '#52c41a', marginBottom: 16 }} />
-            <Title level={4}>{t('delivery.importComplete')}</Title>
+            <Title level={4}>{t('delivery.importSuccess')}</Title>
             <Row gutter={24} justify="center" style={{ marginTop: 24 }}>
               <Col>
                 <Statistic
-                  title={t('delivery.importedTrips')}
-                  value={result.success_count}
-                  suffix={t('delivery.tripUnit')}
+                  title={t('delivery.tripsCreated')}
+                  value={result.tripsCreated}
                 />
               </Col>
-              <Col>
-                <Statistic
-                  title={t('delivery.totalAmount')}
-                  value={formatAmount(result.total_amount)}
-                  prefix="$"
-                />
-              </Col>
-              {result.new_routes_created > 0 && (
+              {result.routesCreated > 0 && (
                 <Col>
                   <Statistic
-                    title={t('delivery.newRoutesCreated')}
-                    value={result.new_routes_created}
-                    suffix={t('delivery.routeCountUnit')}
+                    title={t('delivery.routesCreated')}
+                    value={result.routesCreated}
                   />
                 </Col>
               )}
