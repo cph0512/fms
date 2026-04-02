@@ -125,6 +125,7 @@ model Company {
   budgets            Budget[]
   delivery_routes    DeliveryRoute[]
   delivery_trips     DeliveryTrip[]
+  form_submissions   FormSubmission[]
 
   @@map("companies")
 }
@@ -536,4 +537,41 @@ model DeliveryTrip {
   @@index([route_id])
   @@index([invoice_id])
   @@map("delivery_trips")
+}
+
+// --- M16: Public Form Submissions ---
+
+model FormSubmission {
+  submission_id  String    @id @default(uuid()) @db.Uuid
+  company_id     String    @db.Uuid
+  submitter_name String    @db.VarChar(100)
+  customer_name  String    @db.VarChar(200)
+  notes          String?   @db.Text
+  status         String    @default("PENDING") @db.VarChar(20)
+  reviewed_by    String?   @db.Uuid
+  reviewed_at    DateTime?
+  submitted_at   DateTime  @default(now())
+
+  company Company              @relation(fields: [company_id], references: [company_id], onDelete: Cascade)
+  rows    FormSubmissionRow[]
+
+  @@index([company_id, status])
+  @@index([submitted_at])
+  @@map("form_submissions")
+}
+
+model FormSubmissionRow {
+  row_id        String  @id @default(uuid()) @db.Uuid
+  submission_id String  @db.Uuid
+  row_date      String  @db.VarChar(10)
+  route_content String  @db.VarChar(200)
+  description   String? @db.VarChar(500)
+  trips_count   Int     @default(1)
+  amount        Decimal @db.Decimal(15, 2)
+  row_order     Int     @default(0)
+
+  submission FormSubmission @relation(fields: [submission_id], references: [submission_id], onDelete: Cascade)
+
+  @@index([submission_id])
+  @@map("form_submission_rows")
 }

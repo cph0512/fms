@@ -52,6 +52,9 @@ import { TripEntryPage } from './pages/delivery-trips/TripEntryPage';
 import { TripImportPage } from './pages/delivery-trips/TripImportPage';
 import { TripInvoicePage } from './pages/delivery-trips/TripInvoicePage';
 import { AccountImportPage } from './pages/accounts/AccountImportPage';
+import { DeliveryTripFormPage } from './pages/public/DeliveryTripFormPage';
+import { SubmissionListPage } from './pages/form-submissions/SubmissionListPage';
+import { SubmissionDetailPage } from './pages/form-submissions/SubmissionDetailPage';
 
 const antdLocales: Record<string, typeof zhTW> = {
   'zh-TW': zhTW,
@@ -66,6 +69,9 @@ function App() {
     <ConfigProvider locale={antdLocale} theme={{ token: { colorPrimary: '#1677ff' } }}>
       <BrowserRouter>
         <Routes>
+          {/* Public routes */}
+          <Route path="/form/delivery-trip" element={<DeliveryTripFormPage />} />
+
           {/* Auth routes */}
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<LoginPage />} />
@@ -298,6 +304,12 @@ function App() {
                   </PermissionRoute>
                 }
               />
+            </Route>
+
+            {/* Form Submissions */}
+            <Route path="/form-submissions" element={<PermissionRoute permission="delivery.read" />}>
+              <Route index element={<SubmissionListPage />} />
+              <Route path=":id" element={<SubmissionDetailPage />} />
             </Route>
 
             {/* Company Management */}

@@ -130,6 +130,7 @@ export function MainLayout() {
               { key: '/delivery-trips/entry', label: t('menu.deliveryEntry') },
               { key: '/delivery-trips/import', label: t('menu.deliveryImport') },
               { key: '/delivery-trips/invoice', label: t('menu.deliveryInvoice') },
+              { key: '/form-submissions', label: t('menu.formSubmissions') },
             ],
           },
         ]

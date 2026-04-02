@@ -46,6 +46,7 @@ export default {
     deliveryEntry: '運趟輸入',
     deliveryImport: 'Excel 匯入',
     deliveryInvoice: '產生發票',
+    formSubmissions: '表單提交',
     changePassword: '變更密碼',
     logout: '登出',
     fms: 'FMS',

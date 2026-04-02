@@ -46,6 +46,7 @@ export default {
     deliveryEntry: 'Trip Entry',
     deliveryImport: 'Excel Import',
     deliveryInvoice: 'Generate Invoice',
+    formSubmissions: 'Form Submissions',
     changePassword: 'Change Password',
     logout: 'Logout',
     fms: 'FMS',
