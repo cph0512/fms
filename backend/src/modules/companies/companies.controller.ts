@@ -13,7 +13,7 @@ export async function listHandler(req: Request, res: Response, next: NextFunctio
 
 export async function getByIdHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const company = await companiesService.getCompanyById(req.params.id as string);
+    const company = await companiesService.getCompanyById(req.params.id as string, req.user!.userId);
     res.json(successResponse(company));
   } catch (err) {
     next(err);
@@ -31,7 +31,7 @@ export async function createHandler(req: Request, res: Response, next: NextFunct
 
 export async function updateHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const company = await companiesService.updateCompany(req.params.id as string, req.body);
+    const company = await companiesService.updateCompany(req.params.id as string, req.user!.userId, req.body);
     res.json(successResponse(company));
   } catch (err) {
     next(err);

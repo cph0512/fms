@@ -15,7 +15,15 @@ export async function listCompanies(userId: string) {
   }));
 }
 
-export async function getCompanyById(companyId: string) {
+export async function getCompanyById(companyId: string, userId: string) {
+  const membership = await prisma.userCompany.findUnique({
+    where: { user_id_company_id: { user_id: userId, company_id: companyId } },
+  });
+
+  if (!membership) {
+    throw new AppError(403, 'FORBIDDEN', 'You do not have access to this company');
+  }
+
   const company = await prisma.company.findUnique({
     where: { company_id: companyId },
   });
@@ -87,8 +95,17 @@ export async function createCompany(
 
 export async function updateCompany(
   companyId: string,
+  userId: string,
   data: Record<string, unknown>
 ) {
+  const membership = await prisma.userCompany.findUnique({
+    where: { user_id_company_id: { user_id: userId, company_id: companyId } },
+  });
+
+  if (!membership) {
+    throw new AppError(403, 'FORBIDDEN', 'You do not have access to this company');
+  }
+
   const company = await prisma.company.update({
     where: { company_id: companyId },
     data,
