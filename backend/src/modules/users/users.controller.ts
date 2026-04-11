@@ -24,7 +24,7 @@ export async function createHandler(req: Request, res: Response, next: NextFunct
   try {
     const data = {
       ...req.body,
-      company_id: req.body.company_id || req.user!.companyId,
+      company_id: req.user!.companyId,
     };
     const user = await usersService.createUser(data);
     res.status(201).json(successResponse(user));
@@ -44,7 +44,7 @@ export async function updateHandler(req: Request, res: Response, next: NextFunct
 
 export async function assignRolesHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const roles = await usersService.assignRoles(req.params.id as string, req.body.company_id, req.body.role_ids);
+    const roles = await usersService.assignRoles(req.params.id as string, req.user!.companyId, req.body.role_ids);
     res.json(successResponse(roles));
   } catch (err) {
     next(err);

@@ -196,10 +196,7 @@ export async function assignRoles(userId: string, companyId: string, roleIds: nu
   });
 
   if (!membership) {
-    // Auto-add user to company
-    await prisma.userCompany.create({
-      data: { user_id: userId, company_id: companyId, is_default: false },
-    });
+    throw new AppError(403, 'FORBIDDEN', 'User does not belong to this company');
   }
 
   // Replace all roles for this user in this company
