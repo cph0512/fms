@@ -7,7 +7,7 @@ const publicClient = axios.create({
 
 export const publicFormApi = {
   submitDeliveryTrip: (data: {
-    company_id: string;
+    token: string;
     submitter_name: string;
     customer_name: string;
     notes?: string;

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const submitFormSchema = z.object({
   body: z.object({
-    company_id: z.string().uuid(),
+    token: z.string().min(1),
     submitter_name: z.string().min(1).max(100),
     customer_name: z.string().min(1).max(200),
     notes: z.string().optional(),

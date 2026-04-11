@@ -11,6 +11,7 @@ const router = Router();
 router.post('/public', validate(submitFormSchema), controller.submitHandler);
 
 // Admin routes — require auth
+router.post('/token', authenticate, authorize('delivery.write'), controller.generateTokenHandler);
 router.get('/', authenticate, authorize('delivery.read'), validate(listSubmissionsSchema), controller.listHandler);
 router.get('/:id', authenticate, authorize('delivery.read'), controller.getByIdHandler);
 router.put('/:id/review', authenticate, authorize('delivery.write'), validate(reviewSubmissionSchema), controller.reviewHandler);

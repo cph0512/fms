@@ -11,7 +11,7 @@ const { Title, Text } = Typography;
 
 export function DeliveryTripFormPage() {
   const [searchParams] = useSearchParams();
-  const companyId = searchParams.get('c') || '';
+  const formToken = searchParams.get('t') || '';
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -23,7 +23,7 @@ export function DeliveryTripFormPage() {
     setSubmitting(true);
     try {
       await publicFormApi.submitDeliveryTrip({
-        company_id: companyId,
+        token: formToken,
         submitter_name: values.submitter_name,
         customer_name: values.customer_name,
         notes: values.notes,
@@ -43,7 +43,7 @@ export function DeliveryTripFormPage() {
     }
   };
 
-  if (!companyId) {
+  if (!formToken) {
     return (
       <div style={{ maxWidth: 600, margin: '80px auto', padding: '0 16px' }}>
         <Result status="warning" title="無效的表單連結" subTitle="缺少公司參數，請確認連結是否正確。" />
