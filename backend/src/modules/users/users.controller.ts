@@ -35,7 +35,7 @@ export async function createHandler(req: Request, res: Response, next: NextFunct
 
 export async function updateHandler(req: Request, res: Response, next: NextFunction) {
   try {
-    const user = await usersService.updateUser(req.params.id as string, req.body);
+    const user = await usersService.updateUser(req.params.id as string, req.user!.companyId, req.body);
     res.json(successResponse(user));
   } catch (err) {
     next(err);

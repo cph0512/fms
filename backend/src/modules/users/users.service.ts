@@ -89,6 +89,10 @@ export async function getUserById(userId: string, companyId: string) {
     throw new AppError(404, 'NOT_FOUND', 'User not found');
   }
 
+  if (!user.user_companies.length) {
+    throw new AppError(403, 'FORBIDDEN', 'User does not belong to your company');
+  }
+
   return {
     ...user,
     roles: user.user_company_roles.map((ucr) => ({
@@ -151,8 +155,17 @@ export async function createUser(data: {
 
 export async function updateUser(
   userId: string,
+  companyId: string,
   data: { email?: string; display_name?: string; status?: string; password?: string }
 ) {
+  const membership = await prisma.userCompany.findUnique({
+    where: { user_id_company_id: { user_id: userId, company_id: companyId } },
+  });
+
+  if (!membership) {
+    throw new AppError(403, 'FORBIDDEN', 'User does not belong to your company');
+  }
+
   const updateData: Record<string, unknown> = {};
 
   if (data.email) updateData.email = data.email;
